@@ -1,0 +1,9 @@
+*.dmg
+*.delta
+*.bkp
+Releases/*.html
+required.swift
+Releases/old_updates/
+*.tmp
+build/
+tags

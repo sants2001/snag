@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Snag fork: SUFeedURL/SUPublicEDKey deliberately removed. Pointing Sparkle at
+	     the upstream appcast would silently replace this build with the signed,
+	     Pro-gated Cling release on the next update check. -->
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSAutoFillRequiresTextContentTypeForOneTimeCodeOnMac</key>
+	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Snag asks Finder to open the Get Info panel for files.</string>
+	<key>OSLogPreferences</key>
+	<dict>
+		<key>com.santino.Snag</key>
+		<dict>
+			<key>DEFAULT-OPTIONS</key>
+			<dict>
+				<key>Enable-Private-Data</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+</dict>
+</plist>
