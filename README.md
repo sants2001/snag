@@ -46,15 +46,28 @@ xcodebuild -project Cling.xcodeproj -scheme Cling -configuration Release -destin
 ```
 
 ```bash
-./sign-local.sh && ditto ~/Library/Developer/Xcode/DerivedData/Cling-*/Build/Products/Release/Snag.app /Applications/Snag.app
+./sign-local.sh --install
 ```
 
 `sign-local.sh` is required, not optional: Sparkle ships pre-signed with its own Team ID and
 dyld refuses to load it into an ad-hoc-signed process until the whole bundle is re-signed.
+`--install` also moves the app to `/Applications`, deletes the build-products copy and updates
+LaunchServices, so exactly one bundle ever claims `com.santino.Snag`.
 
 Then grant **Full Disk Access** to `/Applications/Snag.app` in System Settings → Privacy &
-Security. Without it the Home and Library scopes stall partway through indexing. Re-signing on
-every rebuild changes the ad-hoc signature, so you may have to remove and re-add the grant.
+Security. Without it the Home and Library scopes stall partway through indexing.
+
+### If System Settings shows the wrong app
+
+macOS keys a TCC grant to the app's path *and* its code signature. Ad-hoc signing produces a new
+signature on every build, so a grant made against an earlier build can go stale, and the Privacy
+pane may keep showing a name from a bundle that no longer exists (`Cling.app`, if you granted
+during onboarding on a Debug build, since the Xcode target is still named `Cling` and
+`PRODUCT_NAME` governs the bundle on disk while `CFBundleDisplayName` only governs the label).
+
+Fix it by hand in System Settings → Privacy & Security, in both Full Disk Access and
+Accessibility: select the stale row, click **−**, then **+** and pick `/Applications/Snag.app`.
+TCC.db is SIP-protected, so no script can do this for you.
 
 ## Usage
 
