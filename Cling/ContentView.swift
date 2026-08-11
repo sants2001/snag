@@ -140,7 +140,7 @@ struct ContentView: View {
         .opacity(quitHovering ? 1 : 0.4)
         .onHover { quitHovering = $0 }
         .focusable(false)
-        .help("Quit Cling (⌘Q)")
+        .help("Quit Snag (⌘Q)")
     }
     var body: some View {
         let _ = appearance.useGlass
@@ -838,7 +838,7 @@ struct ContentView: View {
                 NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!)
             }
 
-            Text("Press **`\(triggerKeys.readableStr) + \(showAppKey.character)`** to show/hide Cling")
+            Text("Press **`\(triggerKeys.readableStr) + \(showAppKey.character)`** to show/hide Snag")
                 .foregroundStyle(.secondary)
                 .opacity(0.7)
                 .padding(.top, 10)
@@ -2071,7 +2071,7 @@ struct NeedsProView: View {
             Text("Needs a")
                 .foregroundColor(color)
                 .semibold(size)
-            Button("Cling Pro") { getPro() }
+            Button("Snag Pro") { getPro() }
                 .buttonStyle(FlatButton(color: color.opacity(0.3), textColor: color.textColor()))
                 .font(.semibold(size - 1))
                 .fixedSize()

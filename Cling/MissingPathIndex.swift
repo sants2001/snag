@@ -785,7 +785,7 @@ struct MissingPathSheet: View {
                 icon: "mappin.slash",
                 tint: .orange,
                 title: "Not inside any indexed location",
-                detail: "This path isn't under an enabled search scope or an indexed volume, so Cling never walks it. Enable the matching scope (or volume) in Search settings first."
+                detail: "This path isn't under an enabled search scope or an indexed volume, so Snag never walks it. Enable the matching scope (or volume) in Search settings first."
             )
         case .alreadyIndexable:
             VStack(alignment: .leading, spacing: 10) {
@@ -849,7 +849,7 @@ struct MissingPathSheet: View {
             }
 
             if d.options.contains(where: { !$0.reIncludeFsignore.isEmpty || !$0.addBlocklistPrefixes.isEmpty || !$0.addBlocklistContains.isEmpty }) {
-                Text("An exception makes Cling scan inside folders it would otherwise skip, so the next index may take longer.")
+                Text("An exception makes Snag scan inside folders it would otherwise skip, so the next index may take longer.")
                     .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
                     .padding(.top, 2)

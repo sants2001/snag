@@ -592,7 +592,7 @@ struct ClingApp: App {
     @Environment(\.openWindow) var openWindow
 
     var body: some Scene {
-        Window("Cling", id: "main") {
+        Window("Snag", id: "main") {
             ContentView()
                 .frame(minWidth: WindowManager.DEFAULT_SIZE.width, minHeight: 300)
                 .background {
@@ -635,7 +635,7 @@ struct ClingApp: App {
             wm.windowToOpen = nil
         }
 
-        Window("Welcome to Cling", id: "onboarding") {
+        Window("Welcome to Snag", id: "onboarding") {
             OnboardingView()
                 .background { WindowBackground() }
                 .ignoresSafeArea()

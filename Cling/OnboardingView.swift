@@ -15,7 +15,7 @@ enum WindowMode: String, CaseIterable {
 struct OnboardingView: View {
     var body: some View {
         VStack(spacing: 0) {
-            Text("Welcome to Cling")
+            Text("Welcome to Snag")
                 .heavy(28)
                 .padding(.top, 30)
             Text("Fast file search for your Mac")

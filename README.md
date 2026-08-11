@@ -62,15 +62,32 @@ Snag has no Dock icon and no menu bar icon (`LSUIElement`), so the hotkey is the
 
 | | |
 |---|---|
-| **Summon the window** | **Right Cmd + `/`** |
+| **Summon the window** | **Right Cmd + `/`** (inherited default) |
 | Settings | `Cmd + ,` with the window focused |
 | Appearance | Settings → Interface → *Window style*: Glassy, Vibrant, Opaque |
-| Rebind the hotkey | Settings → Shortcuts |
+| Rebind the hotkey | Settings → Shortcuts, or the picker on the first-run screen |
 | Window position | Drag it. The frame persists per scene and reopens where you left it |
 
-Right Command is the trigger because macOS does not otherwise use it as a modifier. If nothing
-happens on first try, grant Accessibility permission in System Settings → Privacy & Security →
-Accessibility; global hotkeys need it.
+Right Command is the trigger because macOS does not otherwise use it as a modifier, but other
+apps have started claiming it (Claude's desktop app, among others). If it is taken, right Option
+is usually free:
+
+```bash
+defaults write com.santino.Snag triggerKeys -array 5 && killall Snag
+```
+
+`triggerKeys` holds `TriggerKey` raw values in Lowtech's declaration order:
+`0 lshift, 1 lctrl, 2 lalt, 3 lcmd, 4 rcmd, 5 ralt, 6 rctrl, 7 rshift`.
+
+If nothing happens at all, grant Accessibility permission in System Settings → Privacy &
+Security → Accessibility; global hotkeys need it.
+
+### Do not run the app straight out of DerivedData
+
+Install to `/Applications` and launch from there. Snag force-terminates any other running process
+that claims its bundle id, so a build product and an installed copy will kill each other and the
+window appears to vanish on launch. Debug builds use `com.santino.Snag.debug` for exactly this
+reason, but two Release copies still collide.
 
 Typing filters as you go. `.png icon` and `.pdf invoice` narrow by extension. `Up`/`Down` cycle
 search history, `Tab` completes, `Cmd+Down` opens the full history.

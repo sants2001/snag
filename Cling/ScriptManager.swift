@@ -17,7 +17,7 @@ let DEFAULT_SCRIPTS = [
 ]
 let scriptsFolder: FilePath =
     FileManager.default.urls(for: .applicationScriptsDirectory, in: .userDomainMask).first?
-        .appendingPathComponent("Cling", isDirectory: true).filePath ?? "~/.local/cling-scripts".filePath!
+        .appendingPathComponent("Snag", isDirectory: true).filePath ?? "~/.local/cling-scripts".filePath!
 let defaultScriptsMarker = scriptsFolder / ".default-scripts-installed"
 let SEVEN_ZIP = Bundle.main.url(forResource: "7zz", withExtension: nil)!.filePath!
 let DUST = Bundle.main.url(forResource: "dust", withExtension: nil)!.filePath!

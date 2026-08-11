@@ -251,7 +251,7 @@ extension SendManager {
         try d.run(); d.waitUntilExit()
         guard d.terminationStatus == 0 else {
             throw NSError(
-                domain: "Cling.Send", code: 1,
+                domain: "Snag.Send", code: 1,
                 userInfo: [NSLocalizedDescriptionKey: "Could not archive \(folder.lastPathComponent)"]
             )
         }

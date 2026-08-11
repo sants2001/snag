@@ -962,8 +962,8 @@ class FuzzyClient {
             // Skip the modal FDA prompt if onboarding will handle it
             if Defaults[.onboardingCompleted] {
                 FullDiskAccess.promptIfNotGranted(
-                    title: "Enable Full Disk Access for Cling",
-                    message: "Cling requires Full Disk Access to index the files on the whole disk.",
+                    title: "Enable Full Disk Access for Snag",
+                    message: "Snag requires Full Disk Access to index the files on the whole disk.",
                     settingsButtonTitle: "Open Settings",
                     skipButtonTitle: "Skip",
                     canBeSuppressed: false,

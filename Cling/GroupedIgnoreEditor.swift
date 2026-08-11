@@ -153,7 +153,7 @@ struct GroupedIgnoreEditor: View {
                 .help("Save these rules and reindex")
             Button("Reset to Default") { rawText = defaultText() }
                 .controlSize(.small)
-                .help("Restore Cling's built-in rules for this list")
+                .help("Restore Snag's built-in rules for this list")
             Spacer()
         }
     }

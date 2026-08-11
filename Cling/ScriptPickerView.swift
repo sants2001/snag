@@ -966,7 +966,7 @@ private struct ScriptParamsForm: View {
         } header: {
             Text("Hotkey")
         } footer: {
-            Text("Press a key to override Cling's automatic ⌘⌃ shortcut, or Escape to clear the override.")
+            Text("Press a key to override Snag's automatic ⌘⌃ shortcut, or Escape to clear the override.")
         }
     }
 

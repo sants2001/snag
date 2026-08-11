@@ -593,7 +593,7 @@ private struct GeneralSettingsPane: View {
 
                 DescriptiveToggle(
                     title: "Show Dock icon",
-                    detail: "Show Cling in the Dock as a regular app.",
+                    detail: "Show Snag in the Dock as a regular app.",
                     isOn: $showDockIcon
                 )
                 .onChange(of: showDockIcon) {
@@ -612,7 +612,7 @@ private struct GeneralSettingsPane: View {
             Section("Window") {
                 DescriptiveToggle(
                     title: "Show window at launch",
-                    detail: "Show the main window when Cling is first launched.",
+                    detail: "Show the main window when Snag is first launched.",
                     isOn: $showWindowAtLaunch
                 )
 
@@ -626,7 +626,7 @@ private struct GeneralSettingsPane: View {
             Section("Global Hotkey") {
                 DescriptiveToggle(
                     title: "Enable global hotkey",
-                    detail: "Summon Cling from anywhere with a keyboard shortcut.",
+                    detail: "Summon Snag from anywhere with a keyboard shortcut.",
                     isOn: $enableGlobalHotkey
                 )
 
@@ -720,8 +720,8 @@ private struct AppsSettingsPane: View {
                     title: "Stash / shelf app",
                     detail: "The Stash action (⌘S) pins files to a Stash section above the results, or hands them to a shelf app like Yoink or Dropover."
                 ) {
-                    Menu(shelfApp == CLING_STASH_APP ? "Cling Stash" : (shelfApp.filePath?.stem ?? "None")) {
-                        Button("Cling Stash (built-in)") { shelfApp = CLING_STASH_APP }
+                    Menu(shelfApp == CLING_STASH_APP ? "Snag Stash" : (shelfApp.filePath?.stem ?? "None")) {
+                        Button("Snag Stash (built-in)") { shelfApp = CLING_STASH_APP }
                         if let detected = detectShelfApp().existingFilePath {
                             Button(detected.stem ?? detected.name.string) { shelfApp = detected.string }
                         }
@@ -804,7 +804,7 @@ private struct SearchSettingsPane: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Search Scopes")
-                        Text("Choose which locations Cling indexes for search.")
+                        Text("Choose which locations Snag indexes for search.")
                             .font(.callout)
                             .foregroundStyle(.secondary)
                     }
@@ -1099,14 +1099,14 @@ private struct ExclusionsSettingsPane: View {
             }
             .controlSize(.small)
             .confirmationDialog(
-                "Reset all exclusion rules to Cling's defaults?",
+                "Reset all exclusion rules to Snag's defaults?",
                 isPresented: $showResetAllConfirm,
                 titleVisibility: .visible
             ) {
                 Button("Reset All", role: .destructive) { resetAllToDefault() }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("Replaces the Home ignore file, the global blocklist, and every per-scope ignore file with Cling's built-in rules. Your custom rules in these lists are removed. Volume ignore files are left untouched.")
+                Text("Replaces the Home ignore file, the global blocklist, and every per-scope ignore file with Snag's built-in rules. Your custom rules in these lists are removed. Volume ignore files are left untouched.")
             }
         }
     }
@@ -1139,7 +1139,7 @@ private struct ExclusionsSettingsPane: View {
             ForEach(ScopeIgnore.rootedScopes, id: \.self) { scope in
                 GroupedIgnoreEditor(
                     title: "\(scope.label) Ignore File",
-                    subtitle: "Rules for the \(scope.label) scope (stored in Cling's cache, since this root can't hold a `.fsignore`). Patterns are relative to the scope root.",
+                    subtitle: "Rules for the \(scope.label) scope (stored in Snag's cache, since this root can't hold a `.fsignore`). Patterns are relative to the scope root.",
                     rawText: scopeBinding(scope),
                     rawEditorHeight: 120,
                     applyDisabled: fuzzy.backgroundIndexing,
@@ -1280,7 +1280,7 @@ private struct LicenseAndUpdatesSettingsPane: View {
         VStack(spacing: 0) {
             if let pro = PM.pro, let updater = updateManager.updater {
                 Form {
-                    LicenseAndUpdatesView(pro: pro, updater: updater, appName: "Cling", changelogURL: URL(string: "https://files.lowtechguys.com/cling/changelog.html"))
+                    LicenseAndUpdatesView(pro: pro, updater: updater, appName: "Snag", changelogURL: URL(string: "https://files.lowtechguys.com/cling/changelog.html"))
                 }
                 .formStyle(.grouped)
                 .scrollContentBackground(.hidden)
@@ -1304,14 +1304,17 @@ private struct LicenseAndUpdatesSettingsPane: View {
 private struct AboutSettingsPane: View {
     var body: some View {
         VStack(spacing: 0) {
+            // Snag fork: these pointed at lowtechguys.com, upstream's contact form and Discord.
+            // A fork must not route its users into someone else's support channel, so they all
+            // point at this repo instead.
             AboutView(
-                appName: "Cling",
+                appName: "Snag",
                 pro: PM.pro,
                 updater: UM.updater,
-                websiteURL: URL(string: "https://lowtechguys.com/cling"),
-                contactURL: URL(string: "https://lowtechguys.com/contact?app=Cling"),
-                discordURL: URL(string: "https://discord.gg/ERxsH9Ek3q"),
-                changelogURL: URL(string: "https://files.lowtechguys.com/cling/changelog.html")
+                websiteURL: URL(string: "https://github.com/sants2001/snag"),
+                contactURL: URL(string: "https://github.com/sants2001/snag/issues"),
+                discordURL: nil,
+                changelogURL: URL(string: "https://github.com/sants2001/snag/commits/main")
             )
 
             #if DEBUG

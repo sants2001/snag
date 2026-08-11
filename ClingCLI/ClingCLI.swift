@@ -12,7 +12,7 @@ func sendMachPort(data: Data?, sendTimeout: TimeInterval = 2, recvTimeout: TimeI
         throw NSError(
             domain: "ClingCLI",
             code: 1,
-            userInfo: [NSLocalizedDescriptionKey: "Cannot connect to Cling app (is it running?)"]
+            userInfo: [NSLocalizedDescriptionKey: "Cannot connect to Snag app (is it running?)"]
         )
     }
 
@@ -44,7 +44,7 @@ func sendMachPort(data: Data?, sendTimeout: TimeInterval = 2, recvTimeout: TimeI
 struct ClingCLI: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "cling",
-        abstract: "Cling: fast fuzzy file search from the command line",
+        abstract: "Snag: fast fuzzy file search from the command line",
         subcommands: [Search.self, Reindex.self, Status.self, Recents.self, Index.self, Explain.self],
         defaultSubcommand: Search.self
     )
@@ -74,7 +74,7 @@ struct Explain: ParsableCommand {
         }
         let request = ClingRequest(command: .explain, paths: resolved)
         guard let data = try sendMachPort(data: JSONEncoder().encode(request)) else {
-            fputs("error: no response from Cling app\n", stderr)
+            fputs("error: no response from Snag app\n", stderr)
             throw ExitCode.failure
         }
         guard let response = try? JSONDecoder().decode(ClingResponse.self, from: data) else {
@@ -138,13 +138,13 @@ struct Search: ParsableCommand {
 
         let t0 = CFAbsoluteTimeGetCurrent()
         guard let responseData = try sendMachPort(data: JSONEncoder().encode(request)) else {
-            fputs("error: no response from Cling app\n", stderr)
+            fputs("error: no response from Snag app\n", stderr)
             throw ExitCode.failure
         }
         let roundtripMs = (CFAbsoluteTimeGetCurrent() - t0) * 1000
 
         guard let response = try? JSONDecoder().decode(ClingResponse.self, from: responseData) else {
-            fputs("error: invalid response from Cling app\n", stderr)
+            fputs("error: invalid response from Snag app\n", stderr)
             throw ExitCode.failure
         }
 
@@ -268,7 +268,7 @@ struct Reindex: ParsableCommand {
         let command: ClingCommand = cancel ? .cancelIndex : .reindex
         let request = ClingRequest(command: command, rebuild: rebuild, scopes: scopes.isEmpty && volumes.isEmpty ? nil : scopes, paths: volumes.isEmpty ? nil : volumes)
         guard let data = try sendMachPort(data: JSONEncoder().encode(request), recvTimeout: 300) else {
-            fputs("error: no response from Cling app\n", stderr)
+            fputs("error: no response from Snag app\n", stderr)
             throw ExitCode.failure
         }
         guard let response = try? JSONDecoder().decode(ClingResponse.self, from: data) else {
@@ -397,7 +397,7 @@ struct Status: ParsableCommand {
     mutating func run() throws {
         let request = ClingRequest(command: .status)
         guard let data = try sendMachPort(data: JSONEncoder().encode(request), recvTimeout: 5) else {
-            fputs("error: no response from Cling app\n", stderr)
+            fputs("error: no response from Snag app\n", stderr)
             throw ExitCode.failure
         }
         guard let response = try? JSONDecoder().decode(ClingResponse.self, from: data) else {
@@ -438,7 +438,7 @@ struct Recents: ParsableCommand {
     mutating func run() throws {
         let request = ClingRequest(command: .recents, maxResults: count)
         guard let data = try sendMachPort(data: JSONEncoder().encode(request), recvTimeout: 5) else {
-            fputs("error: no response from Cling app\n", stderr)
+            fputs("error: no response from Snag app\n", stderr)
             throw ExitCode.failure
         }
         guard let response = try? JSONDecoder().decode(ClingResponse.self, from: data) else {
@@ -476,7 +476,7 @@ struct Index: ParsableCommand {
             let resolved = paths.map { ($0 as NSString).expandingTildeInPath }
             let request = ClingRequest(command: .indexAdd, scopes: scope.isEmpty ? nil : scope, paths: resolved)
             guard let data = try sendMachPort(data: JSONEncoder().encode(request)) else {
-                fputs("error: no response from Cling app\n", stderr)
+                fputs("error: no response from Snag app\n", stderr)
                 throw ExitCode.failure
             }
             guard let response = try? JSONDecoder().decode(ClingResponse.self, from: data) else {
@@ -504,7 +504,7 @@ struct Index: ParsableCommand {
             let resolved = paths.map { ($0 as NSString).expandingTildeInPath }
             let request = ClingRequest(command: .indexRemove, scopes: scope.isEmpty ? nil : scope, paths: resolved)
             guard let data = try sendMachPort(data: JSONEncoder().encode(request)) else {
-                fputs("error: no response from Cling app\n", stderr)
+                fputs("error: no response from Snag app\n", stderr)
                 throw ExitCode.failure
             }
             guard let response = try? JSONDecoder().decode(ClingResponse.self, from: data) else {
@@ -532,7 +532,7 @@ struct Index: ParsableCommand {
             let resolved = paths.map { ($0 as NSString).expandingTildeInPath }
             let request = ClingRequest(command: .indexHas, scopes: scope.isEmpty ? nil : scope, paths: resolved)
             guard let data = try sendMachPort(data: JSONEncoder().encode(request)) else {
-                fputs("error: no response from Cling app\n", stderr)
+                fputs("error: no response from Snag app\n", stderr)
                 throw ExitCode.failure
             }
             guard let response = try? JSONDecoder().decode(ClingResponse.self, from: data) else {

@@ -444,7 +444,7 @@ func formatDuration(_ seconds: Double) -> String {
 // MARK: - Finder Get Info
 
 /// Opens Finder's Get Info panel for one file. First use triggers the
-/// one-time "Cling wants to control Finder" Automation prompt.
+/// one-time "Snag wants to control Finder" Automation prompt.
 func openFinderGetInfo(_ path: FilePath) {
     // Spawn off-main so the key handler never waits on posix_spawn.
     Task.detached(priority: .userInitiated) {

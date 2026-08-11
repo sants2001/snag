@@ -28,8 +28,8 @@ struct SendSecurelyIntroView: View {
                 )
                 point(
                     "bolt.horizontal.circle",
-                    "Keep Cling running",
-                    "The link only works while Cling and your Mac stay awake. The app can be hidden, but if you quit it or the Mac sleeps, the transfer stops."
+                    "Keep Snag running",
+                    "The link only works while Snag and your Mac stay awake. The app can be hidden, but if you quit it or the Mac sleeps, the transfer stops."
                 )
                 point(
                     "clock",
