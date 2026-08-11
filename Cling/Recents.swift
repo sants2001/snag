@@ -43,13 +43,13 @@ let sortComparator: MDQuerySortComparatorFunction = { values1, values2, context 
 
 /// Serializes the off-main recents filtering so rapid Spotlight updates don't run their (heavy)
 /// ignore checks concurrently or assign results out of order.
-let recentsFilterQueue = DispatchQueue(label: "fyi.lowtechguys.cling.recents-filter", qos: .userInitiated)
+let recentsFilterQueue = DispatchQueue(label: "fyi.snag.recents-filter", qos: .userInitiated)
 
 /// The MDQuery lives on this queue (`MDQuerySetDispatchQueue`), so its finish/update callbacks and
 /// every result access run here, never on the main thread. `MDItemCopyAttribute` does a synchronous
 /// metadata-server round trip per item, and iterating thousands of results on the main thread hung
 /// the app for 30s+ on slow disks or a busy Spotlight (CLING-1F).
-let mdQueryQueue = DispatchQueue(label: "fyi.lowtechguys.cling.mdquery", qos: .userInitiated)
+let mdQueryQueue = DispatchQueue(label: "fyi.snag.mdquery", qos: .userInitiated)
 
 // MARK: - RecentsFilterState
 

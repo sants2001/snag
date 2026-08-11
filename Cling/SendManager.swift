@@ -79,15 +79,12 @@ func expirationCountdownLabel(_ seconds: TimeInterval) -> String {
     @Published var expiresAt: Date?
     @Published var stopped = false
 
-    var directURL: String {
-        "https://drop.lowtechguys.com/d/\(id)"
-    }
-    var roomURL: String {
-        "https://drop.lowtechguys.com/r/\(id)"
-    }
-    var shareURL: String {
-        files.count == 1 ? directURL : roomURL
-    }
+    // Unreachable: `SendManager.send` is a no-op in this fork so no SendSession is ever
+    // constructed. These returned share links on upstream's relay at drop.lowtechguys.com;
+    // a fork has no business pointing anyone at that host, so they return nothing.
+    var directURL: String { "" }
+    var roomURL: String { "" }
+    var shareURL: String { "" }
     var fileNames: String {
         files.map(\.lastPathComponent).joined(separator: ", ")
     }

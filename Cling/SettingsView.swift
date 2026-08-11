@@ -1280,7 +1280,7 @@ private struct LicenseAndUpdatesSettingsPane: View {
         VStack(spacing: 0) {
             if let pro = PM.pro, let updater = updateManager.updater {
                 Form {
-                    LicenseAndUpdatesView(pro: pro, updater: updater, appName: "Snag", changelogURL: URL(string: "https://files.lowtechguys.com/cling/changelog.html"))
+                    LicenseAndUpdatesView(pro: pro, updater: updater, appName: "Snag", changelogURL: URL(string: "https://github.com/sants2001/snag/commits/main"))
                 }
                 .formStyle(.grouped)
                 .scrollContentBackground(.hidden)
