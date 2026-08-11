@@ -12,48 +12,17 @@ enum WindowMode: String, CaseIterable {
 
 // MARK: - SnagMark
 
-/// Snag's wordmark glyph, drawn rather than shipped as an asset so it scales cleanly and
-/// tracks the accent colour. Same hook as the app icon (see `tools/make-icon.py`): long
-/// shank, wide bend, barb rising to a point.
+/// The app icon itself, rather than a redrawn copy of it. Reading `NSApp.applicationIconImage`
+/// means the welcome screen can never drift from what the Dock and System Settings show, which
+/// is the whole reason the header exists.
 struct SnagMark: View {
     var size: CGFloat = 44
 
     var body: some View {
-        Canvas { ctx, rect in
-            let s = min(rect.width, rect.height)
-            let w = s * 0.072
-            let r = s * 0.190
-            let shankX = s * 0.585
-            let topY = s * 0.215
-            let bendCY = s * 0.605
-            let barbX = shankX - r
-            let barbTop = bendCY - r * 1.02
-
-            var path = Path()
-            path.move(to: CGPoint(x: shankX, y: topY))
-            path.addLine(to: CGPoint(x: shankX, y: bendCY))
-            path.addArc(
-                center: CGPoint(x: shankX - r, y: bendCY), radius: r,
-                startAngle: .degrees(0), endAngle: .degrees(180), clockwise: false
-            )
-            path.addLine(to: CGPoint(x: barbX, y: barbTop + w * 0.4))
-            ctx.stroke(path, with: .color(.white), style: StrokeStyle(lineWidth: w, lineCap: .round))
-
-            var point = Path()
-            point.move(to: CGPoint(x: barbX - w * 0.78, y: barbTop + w * 0.75))
-            point.addLine(to: CGPoint(x: barbX + w * 0.78, y: barbTop + w * 0.75))
-            point.addLine(to: CGPoint(x: barbX, y: barbTop - w * 1.15))
-            point.closeSubpath()
-            ctx.fill(point, with: .color(.white))
-        }
-        .frame(width: size, height: size)
-        .background(
-            RoundedRectangle(cornerRadius: size * 0.225, style: .continuous)
-                .fill(LinearGradient(
-                    colors: [Color(red: 0.22, green: 0.82, blue: 0.96), Color(red: 0.31, green: 0.27, blue: 0.90)],
-                    startPoint: .top, endPoint: .bottom
-                ))
-        )
+        Image(nsImage: NSApp.applicationIconImage)
+            .resizable()
+            .interpolation(.high)
+            .frame(width: size, height: size)
     }
 }
 

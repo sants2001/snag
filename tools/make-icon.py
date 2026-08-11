@@ -1,151 +1,87 @@
 #!/usr/bin/env python3
-"""Generate Snag's app icon.
+"""Build Snag's app icon set from the source artwork.
 
-Upstream Cling ships its own artwork (a shattered sun in warm orange). GPL-3 covers the code,
-not the logo, so a fork must draw its own mark rather than inherit that one.
+The artwork is Santino's: a pixel-art hook lifting a folder, over a blue card. One thing has
+to happen on the way in: the white page background becomes transparent. macOS composites its
+own shadow under an icon and expects alpha outside the shape, so an opaque white square renders
+as a visible white tile in the Dock and in Settings lists.
 
-Snag's mark is a hook, for the name and because a single bold curve survives being scaled to
-16x16 where anything finer turns to mush. The palette is deliberately cool (cyan to indigo)
-so the two apps are never confused in a Dock or a System Settings list.
+Transparency is flooded in from the page corners rather than keyed on "white", so the interior
+white of the card survives. A naive white-to-alpha pass would eat the card and leave the folder
+floating.
 
-Everything is drawn at 4x and downsampled with LANCZOS, which is cheaper than fighting PIL for
-analytic antialiasing.
-
-    python3 tools/make-icon.py
+    python3 tools/make-icon.py [path/to/source.png]
 """
 from __future__ import annotations
 
 import json
-import math
 import pathlib
+import sys
 
 from PIL import Image, ImageDraw, ImageFilter
 
-OUT = pathlib.Path(__file__).resolve().parent.parent / "Cling/Assets.xcassets/AppIcon.appiconset"
-SS = 4                      # supersampling factor
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+OUT = ROOT / "Cling/Assets.xcassets/AppIcon.appiconset"
+SOURCE = ROOT / "tools/icon-source.png"
+
 CANVAS = 1024
-# macOS icons do not fill their canvas; the rounded body sits inside a margin so the system
-# has room for the drop shadow it composites underneath.
-INSET = 100
-TOP = (56, 208, 245)        # cyan
-BOTTOM = (79, 70, 229)      # indigo
+# macOS icons do not fill their canvas. The body sits inside a margin so the system has room
+# for the shadow it draws underneath; without it the icon reads as oversized next to others.
+MARGIN = 0.094
 
 
-def squircle(size: int, radius: float) -> Image.Image:
-    """Apple-style continuous-curvature squircle, as an alpha mask.
+def drop_page_background(im: Image.Image) -> Image.Image:
+    """Make the white page around the icon transparent, without touching interior white."""
+    w, h = im.size
+    marker = Image.new("RGB", (w, h), (0, 0, 0))
+    marker.paste(im.convert("RGB"), (0, 0))
+    for corner in ((0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)):
+        ImageDraw.floodfill(marker, corner, (255, 0, 255), thresh=26)
 
-    A plain rounded rectangle joins its arcs to the straight edges with a curvature
-    discontinuity that reads as a subtle pinch at the corners next to real macOS icons.
-    A superellipse |x/a|^n + |y/a|^n = 1 has no such join. n is derived from the requested
-    corner radius so the silhouette still matches the platform metric.
-    """
-    n = 2.0 + 3.0 * (1.0 - min(radius / (size / 2), 1.0)) ** 0.5
-    n = max(n, 4.0)
-    mask = Image.new("L", (size, size), 0)
-    d = ImageDraw.Draw(mask)
-    a = size / 2
-    pts = []
-    steps = 2048
-    for i in range(steps):
-        t = 2 * math.pi * i / steps
-        c, s = math.cos(t), math.sin(t)
-        x = a * math.copysign(abs(c) ** (2 / n), c)
-        y = a * math.copysign(abs(s) ** (2 / n), s)
-        pts.append((a + x, a + y))
-    d.polygon(pts, fill=255)
-    return mask
+    mpx = marker.load()
+    alpha = Image.new("L", (w, h), 255)
+    apx = alpha.load()
+    for y in range(h):
+        for x in range(w):
+            if mpx[x, y] == (255, 0, 255):
+                apx[x, y] = 0
+    # Feather by a hair so the cut edge is not aliased after downscaling.
+    alpha = alpha.filter(ImageFilter.GaussianBlur(0.8))
+
+    out = im.copy()
+    out.putalpha(alpha)
+    return out
 
 
-def vertical_gradient(size: int, top: tuple, bottom: tuple) -> Image.Image:
-    grad = Image.new("RGB", (1, size))
-    px = grad.load()
-    for y in range(size):
-        t = y / max(size - 1, 1)
-        # Ease the ramp so the midtone sits slightly high; a linear blend of these two hues
-        # muddies through grey-blue right where the hook crosses it.
-        t = t * t * (3 - 2 * t)
-        px[0, y] = tuple(round(top[i] + (bottom[i] - top[i]) * t) for i in range(3))
-    return grad.resize((size, size), Image.BILINEAR)
+def trim(im: Image.Image) -> Image.Image:
+    bbox = im.split()[3].getbbox()
+    return im.crop(bbox) if bbox else im
 
 
-def hook(draw: ImageDraw.ImageDraw, size: int) -> None:
-    """A fish hook: long shank, wide semicircular bend, barb rising to a spear point.
+def build(source: pathlib.Path) -> Image.Image:
+    im = trim(drop_page_background(Image.open(source).convert("RGBA")))
 
-    Three details do the work of making this read as a hook rather than a "J":
-    the bend is wide relative to the stroke (a tight bend closes into a "U"), the barb
-    rises most of the way back up, and it ends in a triangular point rather than a
-    round cap. Without the point it is just two parallel lines joined by a curve.
-    """
-    w = size * 0.072                     # stroke ~7% of the icon; still solid at 16px
-    r = size * 0.190                     # bend radius, deliberately > 2x the stroke
-    shank_x = size * 0.585
-    top_y = size * 0.215
-    bend_cy = size * 0.605
+    # Fit the trimmed artwork into the canvas, preserving aspect, centred, inside the margin.
+    box = round(CANVAS * (1 - 2 * MARGIN))
+    scale = min(box / im.width, box / im.height)
+    art = im.resize((round(im.width * scale), round(im.height * scale)), Image.LANCZOS)
 
-    draw.line([(shank_x, top_y), (shank_x, bend_cy)], fill=255, width=round(w))
-    draw.ellipse(
-        [shank_x - r, bend_cy - r, shank_x + r, bend_cy + r],
-        outline=255, width=round(w),
-    )
-    # Erase the bend's upper half so the arc is a hook, not a closed ring. This also clips
-    # the shank, so redraw it afterwards.
-    draw.rectangle([shank_x - r * 1.7, bend_cy - r * 2.0, shank_x + r * 1.7, bend_cy], fill=0)
-    draw.line([(shank_x, top_y), (shank_x, bend_cy)], fill=255, width=round(w))
-
-    # Barb rises from the bend's left extremity. Anywhere further left and it floats free
-    # of the curve, and the mark reads as a "U" beside a stray dot.
-    barb_x = shank_x - r
-    barb_top = bend_cy - r * 1.02
-    draw.line([(barb_x, bend_cy), (barb_x, barb_top + w * 0.4)], fill=255, width=round(w))
-    draw.polygon(
-        [
-            (barb_x - w * 0.78, barb_top + w * 0.75),
-            (barb_x + w * 0.78, barb_top + w * 0.75),
-            (barb_x, barb_top - w * 1.15),
-        ],
-        fill=255,
-    )
-    # Flush round cap on the shank, exactly half the stroke so it doesn't bulge.
-    draw.ellipse(
-        [shank_x - w / 2, top_y - w / 2, shank_x + w / 2, top_y + w / 2], fill=255,
-    )
-
-
-def build() -> Image.Image:
-    big = CANVAS * SS
-    inset = INSET * SS
-    body = big - 2 * inset
-
-    mask = squircle(body, body * 0.225)
-    grad = vertical_gradient(body, TOP, BOTTOM)
-
-    # A soft top-left sheen keeps the flat gradient from looking like a plain swatch.
-    sheen = Image.new("L", (body, body), 0)
-    ImageDraw.Draw(sheen).ellipse(
-        [-body * 0.35, -body * 0.75, body * 0.95, body * 0.42], fill=64,
-    )
-    sheen = sheen.filter(ImageFilter.GaussianBlur(body * 0.09))
-    grad = Image.composite(Image.new("RGB", (body, body), (255, 255, 255)), grad, sheen)
-
-    glyph = Image.new("L", (body, body), 0)
-    hook(ImageDraw.Draw(glyph), body)
-    glyph = glyph.filter(ImageFilter.GaussianBlur(SS * 0.6))
-    grad = Image.composite(Image.new("RGB", (body, body), (255, 255, 255)), grad, glyph)
-
-    icon = Image.new("RGBA", (big, big), (0, 0, 0, 0))
-    icon.paste(grad, (inset, inset), mask)
-    return icon.resize((CANVAS, CANVAS), Image.LANCZOS)
+    icon = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
+    icon.paste(art, ((CANVAS - art.width) // 2, (CANVAS - art.height) // 2), art)
+    return icon
 
 
 def main() -> None:
-    master = build()
+    source = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else SOURCE
+    if not source.exists():
+        sys.exit(f"No source artwork at {source}")
+
+    master = build(source)
     manifest = json.loads((OUT / "Contents.json").read_text())
-    written = set()
     for entry in manifest["images"]:
         px = int(entry["size"].split("x")[0]) * int(entry["scale"].rstrip("x"))
         master.resize((px, px), Image.LANCZOS).save(OUT / entry["filename"])
-        written.add(entry["filename"])
-    print(f"wrote {len(written)} icons to {OUT}")
+    print(f"wrote {len(manifest['images'])} icons from {source.name}")
 
 
 if __name__ == "__main__":
