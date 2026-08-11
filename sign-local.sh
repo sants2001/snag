@@ -23,7 +23,7 @@ if [[ "${1:-}" == "--install" ]]; then INSTALL=1; shift; fi
 
 APP="${1:-}"
 if [[ -z "$APP" ]]; then
-	APP=$(ls -td "$HOME"/Library/Developer/Xcode/DerivedData/Cling-*/Build/Products/Release/Snag.app 2>/dev/null | head -1)
+	APP=$(ls -td "$HOME"/Library/Developer/Xcode/DerivedData/Snag-*/Build/Products/Release/Snag.app 2>/dev/null | head -1)
 fi
 [[ -d "$APP" ]] || { echo "No Snag.app found. Build Release first, or pass the path."; exit 1; }
 echo "Signing $APP"
@@ -46,7 +46,7 @@ done
 done
 
 codesign --force --sign - --timestamp=none \
-	--entitlements "$(dirname "$0")/Cling/Cling.entitlements" "$APP"
+	--entitlements "$(dirname "$0")/Snag/Snag.entitlements" "$APP"
 
 codesign --verify --deep --strict "$APP" && echo "Signature OK"
 

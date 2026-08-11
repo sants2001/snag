@@ -1,0 +1,624 @@
+//
+//  Created by Alin Panaitiu on 03.02.2025.
+//
+
+import AppKit
+import Combine
+import Defaults
+import Lowtech
+import LowtechIndie
+import OSLog
+import Sparkle
+import SwiftUI
+import System
+
+private let log = Logger(subsystem: snagSubsystem, category: "SnagApp")
+
+extension [String] {
+    func removing(_ element: String) -> [String] {
+        filter { $0 != element }
+    }
+}
+
+/// Arguments minus --hidden for custom processing
+var appArguments: [String] {
+    CommandLine.arguments.removing("--hidden")
+}
+
+@MainActor
+func cleanup() {
+    FUZZY.cleanup()
+}
+
+let HOUR_FACTOR: TimeInterval = 60 * 60
+let MINUTE_FACTOR: TimeInterval = 60
+
+// MARK: - AppearanceManager
+
+@MainActor @Observable
+final class AppearanceManager {
+    init() {
+        let appearance = Defaults[.windowAppearance]
+        if #available(macOS 26, *) {
+            useGlass = appearance.isGlassy
+        } else {
+            useGlass = false
+        }
+        useVibrant = !appearance.isOpaque
+    }
+
+    static let shared = AppearanceManager()
+
+    var useGlass: Bool
+    var useVibrant: Bool
+
+    func update() {
+        let appearance = Defaults[.windowAppearance]
+        if #available(macOS 26, *) {
+            useGlass = appearance.isGlassy
+        } else {
+            useGlass = false
+        }
+        useVibrant = !appearance.isOpaque
+    }
+}
+
+let AM = AppearanceManager.shared
+
+// MARK: - AppDelegate
+
+@MainActor
+class AppDelegate: LowtechIndieAppDelegate {
+    static var shared: AppDelegate!
+
+    var keepSettingsFrontUntil: Date?
+
+    var mainWindow: NSWindow? {
+        NSApp.windows.first { $0.identifier?.rawValue == "main" }
+    }
+    /// The Settings window's title tracks the selected sidebar item, so match on
+    /// the stable SwiftUI scene identifier instead.
+    var settingsWindow: NSWindow? {
+        NSApp.windows.first { $0.identifier?.rawValue == "settings" }
+    }
+
+    override func applicationDidFinishLaunching(_ notification: Notification) {
+        AppDelegate.shared = self
+        swizzleDraggableToRealPath()
+        NSApp.disableRelaunchOnLogin()
+        if !SWIFTUI_PREVIEW,
+           let app = NSWorkspace.shared.runningApplications.first(where: {
+               $0.bundleIdentifier == Bundle.main.bundleIdentifier
+                   && $0.processIdentifier != NSRunningApplication.current.processIdentifier
+           })
+        {
+            app.forceTerminate()
+        }
+        Migration.run()
+        migrateHiddenActionButtonsIfNeeded()
+        hideOpenWithFromToolbarByDefault()
+        assignFilterUUIDsIfNeeded()
+        SnagShortcuts.setup()
+        FUZZY.start()
+        setupCleanup()
+        QuickLookSupport.shared.warmUp()
+
+        // Snag fork: LowtechPro is not linked at all, so there is no Paddle and no Sentry
+        // in this binary. All formerly gated features are unconditionally on; see
+        // `proactive` in SnagUnlock.swift.
+
+        super.applicationDidFinishLaunching(notification)
+
+        KM.specialKey = Defaults[.enableGlobalHotkey] ? Defaults[.showAppKey] : nil
+        KM.specialKeyModifiers = Defaults[.triggerKeys]
+        KM.onSpecialHotkey = { [self] in
+            if let mainWindow, mainWindow.isKeyWindow {
+                WM.pinned = false
+                mainWindow.resignKey()
+                mainWindow.resignMain()
+                hideOrCloseMainWindow(mainWindow)
+                handBackFocusAfterMainDismiss()
+            } else if Defaults[.instantMode], mainWindow != nil {
+                focusWindow()
+            } else {
+                WM.open("main")
+                focusWindow()
+                focus()
+            }
+        }
+        pub(.enableGlobalHotkey)
+            .sink { change in
+                KM.specialKey = change.newValue ? Defaults[.showAppKey] : nil
+                KM.reinitHotkeys()
+            }.store(in: &observers)
+        pub(.showAppKey)
+            .sink { change in
+                KM.specialKey = Defaults[.enableGlobalHotkey] ? change.newValue : nil
+                KM.reinitHotkeys()
+            }.store(in: &observers)
+        pub(.triggerKeys)
+            .sink { change in
+                KM.specialKeyModifiers = change.newValue
+                KM.reinitHotkeys()
+            }.store(in: &observers)
+        pub(.windowAppearance)
+            .sink { _ in
+                AM.update()
+            }.store(in: &observers)
+        pub(.instantMode)
+            .sink { [self] change in
+                mainWindow?.animationBehavior = change.newValue ? .none : .default
+            }.store(in: &observers)
+
+        UM.updater = updateController.updater
+
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(windowDidBecomeMain(_:)),
+            name: NSWindow.didBecomeMainNotification, object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(windowWillClose(_:)),
+            name: NSWindow.willCloseNotification, object: nil
+        )
+
+        resizeCancellable = NotificationCenter.default.publisher(for: NSWindow.didResizeNotification)
+            .compactMap { $0.object as? NSWindow }
+            .filter { $0.identifier?.rawValue == "main" }
+            .map(\.frame.size)
+            .filter { $0 != WM.size }
+            .throttle(for: .milliseconds(80), scheduler: RunLoop.main, latest: true)
+            .sink { newSize in
+                WM.size = newSize
+            }
+
+        let skipWindow = CommandLine.arguments.contains("--hidden")
+        if !Defaults[.onboardingCompleted] {
+            // Keep dock icon visible during onboarding
+            mainWindow?.close()
+            WM.open("onboarding")
+        } else {
+            NSApp.setActivationPolicy(Defaults[.showDockIcon] ? .regular : .accessory)
+            if Defaults[.showWindowAtLaunch], !skipWindow {
+                WM.open("main")
+                mainWindow?.becomeMain()
+                mainWindow?.becomeKey()
+                focus()
+            } else if !skipWindow {
+                mainWindow?.close()
+            }
+        }
+    }
+
+    override func applicationDidBecomeActive(_ notification: Notification) {
+        guard didBecomeActiveAtLeastOnce else {
+            didBecomeActiveAtLeastOnce = true
+            return
+        }
+//        log.debug("Became active")
+        // Defer until the key window settles. If the app was activated by clicking
+        // the Settings window, don't also pop the main search window.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [self] in
+            if let settings = settingsWindow, settings.isKeyWindow || settings.isMainWindow {
+                return
+            }
+            focusWindow()
+        }
+    }
+
+    override func applicationDidResignActive(_ notification: Notification) {
+        let settingsVisible = settingsWindow?.isVisible ?? false
+        log.debug("Resigned active: pinned=\(WM.pinned) keepOpen=\(Defaults[.keepWindowOpenWhenDefocused]) settingsVisible=\(settingsVisible)")
+        // Keep the window fully visible while a sheet is attached (e.g. "Reindex excluded path"), so clicking
+        // outside the app or dragging a file into the sheet doesn't dismiss the window and the sheet with it.
+        if mainWindow?.attachedSheet != nil {
+            log.debug("Skipping window hide: a sheet is attached to the main window")
+            return
+        }
+        if !Defaults[.keepWindowOpenWhenDefocused], !settingsVisible {
+            settingsWindow?.close()
+        }
+        guard !WM.pinned else {
+            mainWindow?.alphaValue = 0.75
+            return
+        }
+        guard !Defaults[.keepWindowOpenWhenDefocused], !settingsVisible else {
+            return
+        }
+
+        if NSApp.isActive {
+            log.debug("Skipping window close: app became active again")
+            return
+        }
+        log.debug("Closing main window after resign delay")
+        WM.mainWindowActive = false
+        if let mainWindow {
+            hideOrCloseMainWindow(mainWindow)
+        }
+    }
+
+    func hideOrCloseMainWindow(_ window: NSWindow) {
+        FUZZY.cancelPendingSearch()
+        if Defaults[.instantMode] {
+            window.animationBehavior = .none
+            window.alphaValue = 0
+            window.ignoresMouseEvents = true
+            window.orderOut(nil)
+            WM.mainWindowActive = false
+        } else {
+            window.close()
+        }
+    }
+
+    /// Called after the main window is dismissed. If Settings is still open, keep
+    /// Snag active and focus it; otherwise hand focus back to the previous app.
+    /// Activating another app while Settings is open would wrongly defocus Snag.
+    func handBackFocusAfterMainDismiss() {
+        if let settings = settingsWindow, settings.isVisible {
+            NSApp.activate(ignoringOtherApps: true)
+            settings.makeKeyAndOrderFront(nil)
+        } else {
+            APP_MANAGER.lastFrontmostApp?.activate()
+        }
+    }
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        log.debug("Open URLs: \(String(describing: urls))")
+        handleURLs(application, urls)
+    }
+
+    func application(_ sender: NSApplication, openFiles filenames: [String]) {
+        log.debug("Open files: \(String(describing: filenames))")
+        handleURLs(sender, filenames.compactMap(\.url))
+    }
+
+    func handleURLs(_ application: NSApplication, _ urls: [URL]) {
+        let filePaths = urls.compactMap(\.existingFilePath)
+        guard !filePaths.isEmpty else {
+            application.reply(toOpenOrPrint: .failure)
+            return
+        }
+        let id = filePaths.count == 1 ? filePaths[0].name.string : "Custom"
+        FUZZY.folderFilter = FolderFilter(id: id, folders: filePaths, key: nil)
+        application.reply(toOpenOrPrint: .success)
+    }
+
+    func focusWindow() {
+        DropZoneOverlay.shared.dismissIfPresenting()
+        guard let window = mainWindow else { return }
+        window.collectionBehavior.insert(.moveToActiveSpace)
+        if Defaults[.instantMode] {
+            window.animationBehavior = .none
+            window.ignoresMouseEvents = false
+            window.alphaValue = 1
+            window.orderFrontRegardless()
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        } else {
+            window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
+        }
+    }
+
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        if #available(macOS 26, *) {
+            UserDefaults.standard.register(defaults: ["NSAutoFillHeuristicControllerEnabled": false])
+        }
+
+        guard let oldpid = FileManager.default.contents(atPath: PIDFILE.string)?.s?.i32 else {
+            return
+        }
+        log.debug("Killing old process: \(oldpid)")
+        kill(oldpid, SIGKILL)
+    }
+
+    func applicationShouldHandleReopen(_: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        guard !SWIFTUI_PREVIEW else {
+            return true
+        }
+
+//        log.debug("Reopened")
+
+        DropZoneOverlay.shared.dismissIfPresenting()
+        if let mainWindow {
+            mainWindow.orderFrontRegardless()
+            mainWindow.becomeMain()
+            mainWindow.becomeKey()
+            focus()
+        } else {
+            WM.open("main")
+        }
+        return true
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        cleanup()
+    }
+
+    func setupCleanup() {
+        signal(SIGINT) { _ in
+            cleanup()
+            exit(0)
+        }
+        signal(SIGTERM) { _ in
+            cleanup()
+            exit(0)
+        }
+        signal(SIGKILL) { _ in
+            cleanup()
+            exit(0)
+        }
+    }
+
+    @objc func windowWillClose(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow else { return }
+        if window.identifier?.rawValue == "main" {
+            WM.mainWindowActive = false
+            handBackFocusAfterMainDismiss()
+        } else if window.identifier?.rawValue == "settings" {
+            // Restore the user's configured policy once Settings closes.
+            NSApp.setActivationPolicy(Defaults[.showDockIcon] ? .regular : .accessory)
+        }
+    }
+    @objc func windowDidBecomeMain(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow else { return }
+
+
+        if window.identifier?.rawValue == "settings" {
+            // Settings deserves a real menu bar and proper window management, so run
+            // as a regular app while it's open (reverted in windowWillClose).
+            NSApp.setActivationPolicy(.regular)
+            if !settingsWindowConfigured {
+                settingsWindowConfigured = true
+                window.toolbar?.showsBaselineSeparator = false
+                // The window keeps a "Settings" title (set via navigationTitle) so it reads
+                // correctly in the Window menu / Mission Control, but we don't want the text
+                // drawn in the titlebar.
+                window.titleVisibility = .hidden
+            }
+        }
+
+        if window.identifier?.rawValue == "main" {
+            WM.mainWindowActive = true
+            FUZZY.refreshDefaultResultsIfNeeded()
+
+            window.alphaValue = 1
+            // Undo the click-through state set while hidden, otherwise a window shown
+            // again via dock reopen swallows nothing and clicks fall through to Settings.
+            window.ignoresMouseEvents = false
+            if !WM.pinned {
+                window.level = .normal
+            }
+
+            if !windowConfigured {
+                windowConfigured = true
+                window.titlebarAppearsTransparent = true
+                window.styleMask = [
+                    .fullSizeContentView, .closable, .resizable, .miniaturizable, .titled,
+                    .nonactivatingPanel,
+                ]
+                window.isMovableByWindowBackground = true
+                window.backgroundColor = .clear
+
+                if mainWindowDelegateProxy == nil {
+                    let proxy = MainWindowDelegateProxy()
+                    proxy.original = window.delegate
+                    window.delegate = proxy
+                    mainWindowDelegateProxy = proxy
+                }
+            }
+            window.animationBehavior = Defaults[.instantMode] ? .none : .default
+            WM.size = window.frame.size
+
+            if let until = keepSettingsFrontUntil, Date.now < until {
+                settingsWindow?.makeKeyAndOrderFront(nil)
+            } else {
+                keepSettingsFrontUntil = nil
+            }
+        }
+    }
+    func updaterWillRelaunchApplication(_ updater: SPUUpdater) {
+        cleanup()
+    }
+
+    func allowedChannels(for _: SPUUpdater) -> Set<String> {
+        lowtechAllowedChannels()
+    }
+
+    private var windowConfigured = false
+    private var settingsWindowConfigured = false
+    private var mainWindowDelegateProxy: MainWindowDelegateProxy?
+
+    private var resizeCancellable: AnyCancellable?
+
+}
+
+// MARK: - MainWindowDelegateProxy
+
+final class MainWindowDelegateProxy: NSObject, NSWindowDelegate {
+    weak var original: NSWindowDelegate?
+
+    override func responds(to aSelector: Selector!) -> Bool {
+        if super.responds(to: aSelector) { return true }
+        return original?.responds(to: aSelector) ?? false
+    }
+
+    override func forwardingTarget(for aSelector: Selector!) -> Any? {
+        original
+    }
+
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        MainActor.assumeIsolated {
+            guard Defaults[.instantMode] else {
+                return original?.windowShouldClose?(sender) ?? true
+            }
+            WM.pinned = false
+            AppDelegate.shared?.hideOrCloseMainWindow(sender)
+            AppDelegate.shared?.handBackFocusAfterMainDismiss()
+            return false
+        }
+    }
+
+}
+
+// MARK: - WindowManager
+
+@MainActor @Observable
+class WindowManager {
+    static let DEFAULT_SIZE = CGSize(width: 1150, height: 850)
+
+    var windowToOpen: String?
+    var size = DEFAULT_SIZE
+    var pinned = false
+
+    var mainWindowActive = false
+
+    func open(_ window: String) {
+        if window == "main", NSApp.windows.first(where: { $0.identifier?.rawValue == "main" }) != nil {
+            focus()
+            AppDelegate.shared?.focusWindow()
+            if windowToOpen != nil {
+                windowToOpen = nil
+            }
+            return
+        }
+        windowToOpen = window
+    }
+}
+@MainActor let WM = WindowManager()
+
+import IOKit.ps
+
+func batteryLevel() -> Double {
+    guard let snapshot = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
+          let sources: NSArray = IOPSCopyPowerSourcesList(snapshot)?.takeRetainedValue()
+    else { return 1 }
+
+    for ps in sources {
+        guard let info: NSDictionary = IOPSGetPowerSourceDescription(snapshot, ps as CFTypeRef)?.takeUnretainedValue(),
+              let capacity = info[kIOPSCurrentCapacityKey] as? Int,
+              let max = info[kIOPSMaxCapacityKey] as? Int
+        else { continue }
+
+        return (max > 0) ? (Double(capacity) / Double(max)) : Double(capacity)
+    }
+
+    return 1
+}
+
+// MARK: - WindowBackground
+
+struct WindowBackground: View {
+    var tintColor: Color {
+        colorScheme == .light ? .white : .black
+    }
+
+    var body: some View {
+        switch appearance {
+        case .glassy:
+            if #available(macOS 26, *) {
+                let lightOpacity: Double = colorScheme == .light ? 0.7 : 0.5
+                tintColor.opacity(lightOpacity)
+                    .background(Color.clear.glassEffect(.regular, in: .rect))
+            } else {
+                let lightOpacity: Double = colorScheme == .light ? 0.4 : 0.5
+                tintColor.opacity(lightOpacity)
+                    .background(.regularMaterial)
+            }
+        case .vibrant:
+            let lightOpacity: Double = colorScheme == .light ? 0.4 : 0.5
+            tintColor.opacity(lightOpacity)
+                .background(.regularMaterial)
+        case .opaque:
+            Color(.windowBackgroundColor)
+        }
+    }
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    @Default(.windowAppearance) private var appearance
+
+}
+
+// MARK: - SnagApp
+
+@main
+struct SnagApp: App {
+    @Environment(\.openWindow) var openWindow
+
+    var body: some Scene {
+        Window("Snag", id: "main") {
+            ContentView()
+                .frame(minWidth: WindowManager.DEFAULT_SIZE.width, minHeight: 300)
+                .background {
+                    WindowBackground()
+                }
+                .ignoresSafeArea()
+                .environmentObject(envState)
+        }
+        .defaultSize(width: WindowManager.DEFAULT_SIZE.width, height: WindowManager.DEFAULT_SIZE.height)
+        .windowStyle(.hiddenTitleBar)
+        .commands {
+            // The Settings scene used to provide this automatically; recreate it for the Window scene.
+            CommandGroup(replacing: .appSettings) {
+                Button("Settings…") {
+                    WM.open("settings")
+                }
+                .keyboardShortcut(",", modifiers: .command)
+            }
+            // No "Check for updates": Snag has no appcast. `SUFeedURL` is deliberately absent
+            // from Info.plist, since pointing Sparkle at upstream's feed would replace this
+            // build with the signed, Pro-gated Cling release on the next check. A menu item
+            // that can only fail is worse than none; you update by rebuilding from source.
+            CommandGroup(after: .help) {
+                Link(
+                    "Snag \(Bundle.main.version) on GitHub",
+                    destination: URL(string: "https://github.com/sants2001/snag")!
+                )
+            }
+        }
+        .onChange(of: wm.windowToOpen) {
+            guard let window = wm.windowToOpen, !SWIFTUI_PREVIEW else {
+                return
+            }
+            if window == "main", NSApp.windows.first(where: { $0.identifier?.rawValue == "main" }) != nil {
+                return
+            }
+
+            openWindow(id: window)
+            focus()
+            if window == "settings" {
+                AppDelegate.shared?.settingsWindow?.makeKeyAndOrderFront(nil)
+            }
+            NSApp.keyWindow?.orderFrontRegardless()
+            wm.windowToOpen = nil
+        }
+
+        Window("Welcome to Snag", id: "onboarding") {
+            OnboardingView()
+                .background { WindowBackground() }
+                .ignoresSafeArea()
+                .environmentObject(envState)
+        }
+        .defaultSize(width: 560, height: 580)
+        .windowResizability(.contentSize)
+        .windowStyle(.hiddenTitleBar)
+
+        // A regular Window (not the Settings scene): the Settings scene's hosting view pins its size
+        // to the content's intrinsic size, so it can never be resized. A Window resizes normally.
+        Window("Settings", id: "settings") {
+            SettingsView()
+                .environmentObject(envState)
+        }
+        .windowResizability(.contentMinSize)
+        .defaultSize(width: 920, height: 640)
+    }
+
+    @State private var wm = WM
+
+    @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
+
+}

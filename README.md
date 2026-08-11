@@ -1,73 +1,33 @@
 # Snag
 
-Instant fuzzy file search for macOS. A fork of [Cling](https://github.com/FuzzyIdeas/Cling) by
-Alin Panaitiu, with the Pro licence gate removed and the parts that need the author's private
-infrastructure taken out so it builds from a clean checkout.
+Instant fuzzy file search for macOS. Type a few characters, get the file, act on it without
+leaving the keyboard. No account, no telemetry, nothing leaves your machine.
 
-**Cling is already GPL-3.0.** This fork exists to remove a paywall, not to open closed source.
-If you want the polished, signed, notarised, auto-updating build with support behind it, buy
-Cling for €12. It is a fair price and Alin wrote every line of the hard part.
-
-## What changed
-
-| Area | Upstream | Here |
-|---|---|---|
-| Pro gate | `proactive` flag from `LowtechPro`, driven by a Paddle licence | `let proactive = true` in `Cling/SnagUnlock.swift` |
-| Licence checks | `validReq()` / `invalidReq3()` from a git-secret encrypted blob in `FuzzyIdeas/Lowtech` | Always-pass stubs in `Cling/SnagUnlock.swift` |
-| Paddle | Vendor/product IDs set, `pro.checkProLicense()` on launch | Never configured; `PM.pro` left nil so Paddle is never instantiated |
-| Sentry | Crash reports to upstream's Sentry project | DSN removed, never configured |
-| Sparkle | `SUFeedURL` pointed at `files.lowtechguys.com` | Removed. Left in place it would replace this build with the gated one |
-| Secure Send | `WarpDrop` package + `drop.lowtechguys.com` relay | Removed from the action registry; `SendManager.send` is a no-op |
-| Identity | `com.lowtechguys.Cling` | `com.santino.Snag`, own IPC port and index cache |
-| Signing | Developer ID, team `RDDXV84A73` | Ad-hoc, see `sign-local.sh` |
-
-Everything Pro is on: System and Root scopes, external volume indexing, Quick Filters, folder
-filters, scripts, and the result cap (upstream free tier stops at 500).
-
-## Why the upstream repo does not build
-
-Two pieces are published but not buildable, which is worth knowing before you fork it yourself:
-
-1. `Cling.xcodeproj` references a **local** SPM package at
-   `../../../Github/alin23/warpdrop/swift`. That path only exists on the author's machine and
-   `WarpDrop` is not a public repo.
-2. `validReq`, `invalidReq3` and `proactive` are referenced by `FuzzyClient.swift` but live in
-   `enc.swift.secret`, a git-secret encrypted file in `FuzzyIdeas/Lowtech`. Nobody without the
-   decryption key can compile them.
-
-Both are handled here.
+Snag is a fork of [Cling](https://github.com/FuzzyIdeas/Cling) by Alin Panaitiu, GPL-3.0. Cling
+is excellent and the search engine is his work. This build removes the €12 licence gate, drops
+the payments and crash-reporting SDKs entirely, and fixes the two things that stop the published
+repo from compiling. If you want a signed, notarised, auto-updating build with support behind
+it, buy Cling.
 
 ## Build
 
-Needs Xcode 26+.
+Needs Xcode 26 or newer.
 
 ```bash
-xcodebuild -project Cling.xcodeproj -scheme Cling -configuration Release -destination 'platform=macOS' build
+xcodebuild -project Snag.xcodeproj -scheme Snag -configuration Release -destination 'platform=macOS' build
 ```
 
 ```bash
 ./sign-local.sh --install
 ```
 
-`sign-local.sh` is required, not optional: Sparkle ships pre-signed with its own Team ID and
-dyld refuses to load it into an ad-hoc-signed process until the whole bundle is re-signed.
+`sign-local.sh` is required, not optional. Sparkle ships pre-signed with its own Team ID and dyld
+refuses to load it into an ad-hoc-signed process until the whole bundle is re-signed inside-out.
 `--install` also moves the app to `/Applications`, deletes the build-products copy and updates
 LaunchServices, so exactly one bundle ever claims `com.santino.Snag`.
 
 Then grant **Full Disk Access** to `/Applications/Snag.app` in System Settings → Privacy &
-Security. Without it the Home and Library scopes stall partway through indexing.
-
-### If System Settings shows the wrong app
-
-macOS keys a TCC grant to the app's path *and* its code signature. Ad-hoc signing produces a new
-signature on every build, so a grant made against an earlier build can go stale, and the Privacy
-pane may keep showing a name from a bundle that no longer exists (`Cling.app`, if you granted
-during onboarding on a Debug build, since the Xcode target is still named `Cling` and
-`PRODUCT_NAME` governs the bundle on disk while `CFBundleDisplayName` only governs the label).
-
-Fix it by hand in System Settings → Privacy & Security, in both Full Disk Access and
-Accessibility: select the stale row, click **−**, then **+** and pick `/Applications/Snag.app`.
-TCC.db is SIP-protected, so no script can do this for you.
+Security. Without it, the Home and Library scopes stall partway through indexing.
 
 ## Usage
 
@@ -75,11 +35,14 @@ Snag has no Dock icon and no menu bar icon (`LSUIElement`), so the hotkey is the
 
 | | |
 |---|---|
-| **Summon the window** | **Right Cmd + `/`** (inherited default) |
+| **Summon the window** | **Right Cmd + `/`** |
 | Settings | `Cmd + ,` with the window focused |
-| Appearance | Settings → Interface → *Window style*: Glassy, Vibrant, Opaque |
-| Rebind the hotkey | Settings → Shortcuts, or the picker on the first-run screen |
-| Window position | Drag it. The frame persists per scene and reopens where you left it |
+| Appearance | Settings → Style → *Window style*: Glassy, Vibrant, Opaque |
+| Rebind the hotkey | Settings → Keyboard Shortcuts, or the first-run screen |
+| Window position | Drag it. The frame persists and reopens where you left it |
+
+Typing filters as you go. `.png icon` and `.pdf invoice` narrow by extension. `Up`/`Down` cycle
+search history, `Tab` completes, `Cmd+Down` opens the full history.
 
 Right Command is the trigger because macOS does not otherwise use it as a modifier, but other
 apps have started claiming it (Claude's desktop app, among others). If it is taken, right Option
@@ -89,56 +52,85 @@ is usually free:
 defaults write com.santino.Snag triggerKeys -array 5 && killall Snag
 ```
 
-`triggerKeys` holds `TriggerKey` raw values in Lowtech's declaration order:
-`0 lshift, 1 lctrl, 2 lalt, 3 lcmd, 4 rcmd, 5 ralt, 6 rctrl, 7 rshift`.
+`triggerKeys` holds raw values in Lowtech's `TriggerKey` order: `0 lshift, 1 lctrl, 2 lalt,
+3 lcmd, 4 rcmd, 5 ralt, 6 rctrl, 7 rshift`. If nothing happens at all, grant Accessibility in
+System Settings → Privacy & Security; global hotkeys need it.
 
-If nothing happens at all, grant Accessibility permission in System Settings → Privacy &
-Security → Accessibility; global hotkeys need it.
-
-### Do not run the app straight out of DerivedData
-
-Install to `/Applications` and launch from there. Snag force-terminates any other running process
-that claims its bundle id, so a build product and an installed copy will kill each other and the
-window appears to vanish on launch. Debug builds use `com.santino.Snag.debug` for exactly this
-reason, but two Release copies still collide.
-
-Typing filters as you go. `.png icon` and `.pdf invoice` narrow by extension. `Up`/`Down` cycle
-search history, `Tab` completes, `Cmd+Down` opens the full history.
-
-There is also a CLI inside the bundle:
+There is also a terminal tool, **off by default** for the reason described in
+[SECURITY.md](SECURITY.md#the-local-ipc-surface-and-why-it-is-off-by-default). Turn it on in
+Settings → Search, then:
 
 ```bash
-/Applications/Snag.app/Contents/SharedSupport/ClingCLI search kernel --count 20 --verbose
+/Applications/Snag.app/Contents/SharedSupport/SnagCLI search kernel --count 20 --verbose
 ```
+
+## Security
+
+Short version: nothing leaves your machine, and the frameworks that could send something are not
+in the binary. Full detail, with commands to verify each claim yourself, in
+**[SECURITY.md](SECURITY.md)**.
+
+The one thing worth knowing up front: Snag stores an index of every **file name and path** on
+your disk in `~/Library/Caches/com.santino.Snag` (~450 MB). Never file contents. It is
+owner-only but unencrypted. `rm -rf` it any time; it rebuilds.
+
+## What this fork changes
+
+| Area | Cling | Snag |
+|---|---|---|
+| Pro gate | `proactive`, driven by a Paddle licence | `let proactive = true`; every feature on |
+| Payments | Paddle linked and configured | `LowtechPro` not linked; Paddle absent from the binary |
+| Crash reports | Sentry, DSN configured | `LowtechProSentry` not linked; Sentry absent from the binary |
+| Auto-update | Sparkle against `files.lowtechguys.com` | No `SUFeedURL`, no update menu item |
+| Terminal tool | Mach port always listening | Off by default, opt in per [SECURITY.md](SECURITY.md) |
+| Secure Send | `WarpDrop` + `drop.lowtechguys.com` | Removed |
+| Identity | `com.lowtechguys.Cling` | `com.santino.Snag`, own IPC port and index cache |
+| Signing | Developer ID | Ad-hoc, see `sign-local.sh` |
+
+Everything formerly behind the licence is on: System and Root scopes, external volume indexing,
+Quick Filters, folder filters, scripts, and the result cap that upstream's free tier holds at 500.
+
+## Why Cling does not build from a clean checkout
+
+Worth knowing if you plan to fork it yourself. Two independent blockers, neither documented
+upstream:
+
+1. `Cling.xcodeproj` references a **local** SPM package at
+   `../../../Github/alin23/warpdrop/swift`. That path exists only on the author's machine and
+   `WarpDrop` is not a public repo, so package resolution fails before anything compiles.
+2. `validReq`, `invalidReq3` and `proactive` are called by `FuzzyClient.swift` but exist nowhere
+   in the public tree. They live in `enc.swift.secret`, a git-secret encrypted blob inside
+   `FuzzyIdeas/Lowtech`. The anti-tamper layer is the part that stays closed.
+
+Both are handled here: the Send feature that needed WarpDrop is removed, and the licence checks
+are reimplemented as always-pass in `Snag/SnagUnlock.swift`.
 
 ## Known ceilings
 
 - `Vendor/KeyboardShortcuts` is a local copy pinned to `-Onone`. Swift 6.3's `EarlyPerfInliner`
-  recurses without bound on its `ObjectAssociation<T>.deinit` and crashes the compiler at any
-  optimisation level. The Cling target still builds at `-O`, so search speed is unaffected
-  (~7ms across 905k entries). Un-vendor it once the compiler bug is fixed.
-- `Paddle.framework` and `Sentry.framework` are still linked, because they are dependencies of
-  `LowtechPro` and dropping them means forking `FuzzyIdeas/Lowtech`. Neither is ever
-  initialised; the running app opens no network sockets.
+  recurses without bound on its `ObjectAssociation<T>.deinit` and crashes the compiler at `-O`
+  and `-Osize`. Xcode cannot scope a build setting into a remote SPM target, hence the vendored
+  copy. The Snag target still builds at `-O`, so search speed is unaffected (39-95ms warm across
+  1.6M entries). Un-vendor once the compiler bug is fixed.
+- Sparkle is still linked, as a dependency of `LowtechIndie`. It has no feed to check.
+- The IPC uses CFMessagePort, which cannot authenticate its peer. XPC is the right answer.
 - No auto-update. Rebuild to update.
 
 ## Licence
 
-GPL-3.0, inherited from Cling. See `LICENSE`. Original work © Alin Panaitiu / The Low Tech Guys.
+GPL-3.0, inherited from Cling. See [LICENSE](LICENSE). Original work © Alin Panaitiu / The Low
+Tech Guys.
 
-### What you may distribute
+**You may distribute this source repository.** GPL-3.0 explicitly grants the right to distribute
+modified versions, which is what this is. The repo contains modified Cling source and a vendored
+copy of `KeyboardShortcuts` (MIT, licence included). It does not contain `Lowtech`; SPM fetches
+that on the building machine, so publishing this repo redistributes nothing proprietary.
 
-**This source repository: yes.** GPL-3.0 explicitly grants the right to distribute modified
-versions, which is what this is. The repo contains modified Cling source and a vendored copy of
-`KeyboardShortcuts` (MIT, licence included). It does not contain `Lowtech`; SPM fetches that from
-GitHub on the building machine, so publishing this repo redistributes nothing proprietary.
+**You may not distribute a compiled `.app` or `.dmg`.** `FuzzyIdeas/Lowtech` ships with no
+licence file and is therefore all-rights-reserved. A built binary statically embeds its compiled
+code, which is redistribution. Referencing a dependency is not the same as copying it; only the
+binary copies it.
 
-**A compiled `.app` or `.dmg`: no, not yet.** `FuzzyIdeas/Lowtech` ships with **no licence file**
-and is therefore all-rights-reserved. A built binary statically embeds its compiled code, which
-is redistribution. Referencing a dependency is not the same as copying it, and only the binary
-does the copying.
-
-Unblocking binaries means getting Lowtech licensed. Given that every other FuzzyIdeas repo is
-GPL-3.0 and that a GPL-3 app depending on an all-rights-reserved library is internally
-inconsistent (upstream has the same problem distributing Cling), the omission reads as an
-oversight rather than a decision. Asking upstream to add a `LICENSE` is the cheap fix.
+Unblocking binary releases means getting Lowtech licensed. Every other FuzzyIdeas repo is
+GPL-3.0, and a GPL-3 app depending on an all-rights-reserved library is internally inconsistent
+(upstream has the same problem distributing Cling), so the omission reads as an oversight.

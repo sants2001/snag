@@ -21,7 +21,7 @@ import sys
 from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-OUT = ROOT / "Cling/Assets.xcassets/AppIcon.appiconset"
+OUT = ROOT / "Snag/Assets.xcassets/AppIcon.appiconset"
 SOURCE = ROOT / "tools/icon-source.png"
 
 CANVAS = 1024
