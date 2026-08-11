@@ -15,6 +15,11 @@
 		C761722B2D50F5D000D78B4F /* LowtechIndie in Frameworks */ = {isa = PBXBuildFile; productRef = C761722A2D50F5D000D78B4F /* LowtechIndie */; };
 		C7C2CDD32FDFE0B6005EC019 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = C7C2CDD22FDFE0B6005EC019 /* KeyboardShortcuts */; };
 		C7FE59F12D635D1500141592 /* ClopSDK in Frameworks */ = {isa = PBXBuildFile; productRef = C7FE59F02D635D1500141592 /* ClopSDK */; };
+		5A6ADEC0000000000000001 /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 5A6ADEC0000000000000002 /* Defaults */; };
+		5A6ADEC0000000000000101 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 5A6ADEC0000000000000102 /* Sparkle */; };
+		5A6ADEC0000000000000201 /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 5A6ADEC0000000000000202 /* LaunchAtLogin */; };
+		5A6ADEC0000000000000301 /* Magnet in Frameworks */ = {isa = PBXBuildFile; productRef = 5A6ADEC0000000000000302 /* Magnet */; };
+		5A6ADEC0000000000000401 /* Sauce in Frameworks */ = {isa = PBXBuildFile; productRef = 5A6ADEC0000000000000402 /* Sauce */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -94,6 +99,11 @@
 				C7C2CDD32FDFE0B6005EC019 /* KeyboardShortcuts in Frameworks */,
 				C76172292D50F5D000D78B4F /* Lowtech in Frameworks */,
 				C7FE59F12D635D1500141592 /* ClopSDK in Frameworks */,
+				5A6ADEC0000000000000001 /* Defaults in Frameworks */,
+				5A6ADEC0000000000000101 /* Sparkle in Frameworks */,
+				5A6ADEC0000000000000201 /* LaunchAtLogin in Frameworks */,
+				5A6ADEC0000000000000301 /* Magnet in Frameworks */,
+				5A6ADEC0000000000000401 /* Sauce in Frameworks */,
 				C761722B2D50F5D000D78B4F /* LowtechIndie in Frameworks */,
 				AA11000000000000000000A3 /* Highlighter in Frameworks */,
 			);
@@ -179,6 +189,11 @@
 				C761722A2D50F5D000D78B4F /* LowtechIndie */,
 				C74B68A02D50F95800FCDEBA /* Ignore */,
 				C7FE59F02D635D1500141592 /* ClopSDK */,
+				5A6ADEC0000000000000002 /* Defaults */,
+				5A6ADEC0000000000000102 /* Sparkle */,
+				5A6ADEC0000000000000202 /* LaunchAtLogin */,
+				5A6ADEC0000000000000302 /* Magnet */,
+				5A6ADEC0000000000000402 /* Sauce */,
 				AA11000000000000000000A2 /* Highlighter */,
 				C7C2CDD22FDFE0B6005EC019 /* KeyboardShortcuts */,
 			);
@@ -218,6 +233,11 @@
 				C76172272D50F5D000D78B4F /* XCRemoteSwiftPackageReference "Lowtech" */,
 				C76172332D50F8B100D78B4F /* XCRemoteSwiftPackageReference "swift-ignore" */,
 				C7FE59EF2D635CDC00141592 /* XCRemoteSwiftPackageReference "ClopSDK" */,
+				5A6ADEC0000000000000003 /* XCRemoteSwiftPackageReference "Defaults" */,
+				5A6ADEC0000000000000103 /* XCRemoteSwiftPackageReference "Sparkle" */,
+				5A6ADEC0000000000000203 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */,
+				5A6ADEC0000000000000303 /* XCRemoteSwiftPackageReference "Magnet" */,
+				5A6ADEC0000000000000403 /* XCRemoteSwiftPackageReference "Sauce" */,
 				AA11000000000000000000A1 /* XCRemoteSwiftPackageReference "HighlighterSwift" */,
 				C7C2CDD12FDFE0B6005EC01A /* XCLocalSwiftPackageReference "Vendor/KeyboardShortcuts" */,
 			);
@@ -573,6 +593,46 @@
 				minimumVersion = 1.0.0;
 			};
 		};
+		5A6ADEC0000000000000003 /* XCRemoteSwiftPackageReference "Defaults" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/Defaults";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.8;
+			};
+		};
+		5A6ADEC0000000000000103 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.3;
+			};
+		};
+		5A6ADEC0000000000000203 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/LaunchAtLogin-Modern";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.0;
+			};
+		};
+		5A6ADEC0000000000000303 /* XCRemoteSwiftPackageReference "Magnet" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/alin23/Magnet";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.1.3;
+			};
+		};
+		5A6ADEC0000000000000403 /* XCRemoteSwiftPackageReference "Sauce" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Clipy/Sauce";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.2.0;
+			};
+		};
 		C7FE59EF2D635CDC00141592 /* XCRemoteSwiftPackageReference "ClopSDK" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/FuzzyIdeas/ClopSDK";
@@ -612,6 +672,31 @@
 		C7C2CDD22FDFE0B6005EC019 /* KeyboardShortcuts */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = KeyboardShortcuts;
+		};
+		5A6ADEC0000000000000002 /* Defaults */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5A6ADEC0000000000000003 /* XCRemoteSwiftPackageReference "Defaults" */;
+			productName = Defaults;
+		};
+		5A6ADEC0000000000000102 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5A6ADEC0000000000000103 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+		5A6ADEC0000000000000202 /* LaunchAtLogin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5A6ADEC0000000000000203 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */;
+			productName = LaunchAtLogin;
+		};
+		5A6ADEC0000000000000302 /* Magnet */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5A6ADEC0000000000000303 /* XCRemoteSwiftPackageReference "Magnet" */;
+			productName = Magnet;
+		};
+		5A6ADEC0000000000000402 /* Sauce */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5A6ADEC0000000000000403 /* XCRemoteSwiftPackageReference "Sauce" */;
+			productName = Sauce;
 		};
 		C7FE59F02D635D1500141592 /* ClopSDK */ = {
 			isa = XCSwiftPackageProductDependency;
