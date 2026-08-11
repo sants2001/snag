@@ -62,7 +62,7 @@ extension URL {
             return type
         }
 
-        guard let mimeType = shell("/usr/bin/file", args: ["-b", "--mime-type", path], timeout: 1.5).o else {
+        guard let mimeType = runShell("/usr/bin/file", args: ["-b", "--mime-type", path], timeout: 1.5).o else {
             return nil
         }
 

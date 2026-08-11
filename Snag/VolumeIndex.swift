@@ -170,7 +170,7 @@ extension FuzzyClient {
         }
         guard fsType == "apfs" else { return false }
         // APFS Time Machine: check for Backup volume role
-        if let output = shell("/usr/sbin/diskutil", args: ["info", volume.string], timeout: 3).o {
+        if let output = runShell("/usr/sbin/diskutil", args: ["info", volume.string], timeout: 3).o {
             for line in output.components(separatedBy: "\n") where line.contains("APFS Volume Role:") {
                 let role = line.components(separatedBy: ":").last?.trimmingCharacters(in: .whitespaces) ?? ""
                 // T=Backup (Time Machine), C=Sidecar (Time Machine)

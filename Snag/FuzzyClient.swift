@@ -980,7 +980,7 @@ class FuzzyClient {
     }
 
     func cleanup() {
-        LowtechFSEvents.stopWatching(for: ObjectIdentifier(self))
+        SnagFSEvents.stopWatching(for: ObjectIdentifier(self))
         searchTask?.cancel()
         for source in fsignoreWatchSources {
             source.cancel()
@@ -1420,16 +1420,16 @@ class FuzzyClient {
     // MARK: - File Watching (FSEvents)
 
     func stopWatchingFiles() {
-        LowtechFSEvents.stopWatching(for: ObjectIdentifier(self))
+        SnagFSEvents.stopWatching(for: ObjectIdentifier(self))
     }
 
     func watchFiles() {
         removedFiles.removeAll()
         seenPaths.removeAll()
-        LowtechFSEvents.stopWatching(for: ObjectIdentifier(self))
+        SnagFSEvents.stopWatching(for: ObjectIdentifier(self))
 
         do {
-            try LowtechFSEvents.startWatching(
+            try SnagFSEvents.startWatching(
                 paths: ["/Users", "/usr/local", "/opt", "/Applications", "/tmp"],
                 for: ObjectIdentifier(self), latency: 1
             ) { event in

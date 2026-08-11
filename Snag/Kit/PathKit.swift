@@ -225,11 +225,22 @@ struct ShellResult {
     let exitCode: Int32
 
     var success: Bool { exitCode == 0 }
+
+    /// Trimmed stdout and stderr. Short names because the call sites read `result.o` and reach
+    /// for them constantly; command output almost always arrives with a trailing newline that
+    /// every caller would otherwise strip by hand.
+    var o: String? { output?.trimmingCharacters(in: .whitespacesAndNewlines) }
+    var e: String? { error?.trimmingCharacters(in: .whitespacesAndNewlines) }
 }
 
 /// Run a command to completion and collect its output.
+///
+/// Named `runShell` rather than `shell`. A free function with the same name in two visible
+/// modules is ambiguous at the call site: unlike a type member, there is no rule preferring the
+/// current module. Renaming is cheaper and clearer than fighting overload resolution, and there
+/// are only three callers.
 @discardableResult
-func shell(
+func runShell(
     _ launchPath: String = "/bin/zsh",
     command: String? = nil,
     args: [String] = [],

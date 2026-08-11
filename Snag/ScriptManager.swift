@@ -272,7 +272,7 @@ class ScriptManager {
 
     func startScriptsWatcher() {
         do {
-            try LowtechFSEvents.startWatching(paths: [scriptsFolder.string], for: ObjectIdentifier(self), latency: 3) { event in
+            try SnagFSEvents.startWatching(paths: [scriptsFolder.string], for: ObjectIdentifier(self), latency: 3) { event in
                 mainActor { [self] in
                     guard let flags = event.flag,
                           flags.hasElements(from: [
@@ -350,7 +350,7 @@ class ScriptManager {
             log.error("SHELL environment variable not found")
             return
         }
-        guard let envOutput = shell(userShell, args: ["-l", "-c", "/usr/bin/printenv"]).o, envOutput.isNotEmpty else {
+        guard let envOutput = runShell(userShell, args: ["-l", "-c", "/usr/bin/printenv"]).o, envOutput.isNotEmpty else {
             log.error("Failed to get environment variables from shell")
             return
         }

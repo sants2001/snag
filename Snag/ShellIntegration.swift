@@ -23,7 +23,7 @@ class ShellIntegration {
         let fm = FileManager.default
         let link = SNAG_CLI_LINK.string
         guard let attrs = try? fm.attributesOfItem(atPath: link),
-              (attrs[.type] as? FileAttributeType) == .typeSymbolicLink,
+              (attrs[FileAttributeKey.type] as? FileAttributeType) == FileAttributeType.typeSymbolicLink,
               let dest = try? fm.destinationOfSymbolicLink(atPath: link)
         else { return false }
         return dest == cliBin.string
