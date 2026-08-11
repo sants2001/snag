@@ -56,6 +56,31 @@ Then grant **Full Disk Access** to `/Applications/Snag.app` in System Settings �
 Security. Without it the Home and Library scopes stall partway through indexing. Re-signing on
 every rebuild changes the ad-hoc signature, so you may have to remove and re-add the grant.
 
+## Usage
+
+Snag has no Dock icon and no menu bar icon (`LSUIElement`), so the hotkey is the only way in.
+
+| | |
+|---|---|
+| **Summon the window** | **Right Cmd + `/`** |
+| Settings | `Cmd + ,` with the window focused |
+| Appearance | Settings → Interface → *Window style*: Glassy, Vibrant, Opaque |
+| Rebind the hotkey | Settings → Shortcuts |
+| Window position | Drag it. The frame persists per scene and reopens where you left it |
+
+Right Command is the trigger because macOS does not otherwise use it as a modifier. If nothing
+happens on first try, grant Accessibility permission in System Settings → Privacy & Security →
+Accessibility; global hotkeys need it.
+
+Typing filters as you go. `.png icon` and `.pdf invoice` narrow by extension. `Up`/`Down` cycle
+search history, `Tab` completes, `Cmd+Down` opens the full history.
+
+There is also a CLI inside the bundle:
+
+```bash
+/Applications/Snag.app/Contents/SharedSupport/ClingCLI search kernel --count 20 --verbose
+```
+
 ## Known ceilings
 
 - `Vendor/KeyboardShortcuts` is a local copy pinned to `-Onone`. Swift 6.3's `EarlyPerfInliner`
