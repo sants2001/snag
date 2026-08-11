@@ -28,10 +28,43 @@ in the same change, or nothing compiles.
 
 The good news: Snag references none of the other 15 by name, so they leave with Lowtech.
 
+## Revised scope, after measuring properly
+
+The first estimate here said "roughly 20 symbols" and was **wrong**. Counting importable names
+missed the actual dependency: most of what Snag uses from Lowtech is **extensions on standard
+library and Foundation types**, which have no name to grep for. Lowtech exposes 334 public
+members in total.
+
+The definitive list comes from deleting every `import Lowtech` while the package is still
+linked, then reading the compiler errors. Doing that surfaced, beyond the helpers already
+replaced in `Snag/Kit/SnagKit.swift`:
+
+| Extended type | Members Snag uses |
+|---|---|
+| `FilePath` | the `/` path-join operator, `.exists`, `.isDir`, `.url`, `.shellString`, `.mkdir`, `.copy`, `.withExtension` |
+| `String` | `.filePath` |
+| `URL` | `.filePath` |
+| `Process` | `.stdoutFilePath`, `.stderrFilePath` |
+| `Array` | `.isNotEmpty`, `.set` |
+
+Plus free functions `mainAsync`, `mainAsyncAfter`, `shell`, `shellProc`, and `LowtechFSEvents`.
+
+This matters more than the count suggests. `FilePath` is used across 28 files, so its extensions
+are load-bearing throughout the app rather than confined to one layer. They are individually
+trivial (`.exists` is a `FileManager` call, `/` is `appending`), but there are many and each one
+is a chance to introduce a subtle behavioural difference in path handling.
+
+`KM`, `SauceKey`, `TriggerKey`, `FlatButton`, `DynamicKey`, `DirectionalModifierView`, the
+`.heavy()` / `.round()` text helpers and `LowtechIndieAppDelegate` had not even surfaced yet when
+the build stopped, because Swift gives up on a file after enough errors.
+
+**Revised estimate: a week or more of careful work, not several days.** The pervasive
+`FilePath` layer is the bulk, not `KM` as originally assumed.
+
 ## What has to be reimplemented
 
-Roughly 20 symbols. Most are thin wrappers over AppKit and can go in `Snag/Kit/`. No new SPM
-package is needed; this is a single app target.
+Beyond the extensions above. Most are thin wrappers over AppKit and can go in `Snag/Kit/`. No
+new SPM package is needed; this is a single app target.
 
 ### Trivial, an afternoon
 
@@ -69,10 +102,17 @@ there are MIT alternatives worth checking before writing one.
 
 Each step ends buildable and committable.
 
-1. Add `Defaults`, `Sparkle`, `LaunchAtLogin`, `Magnet`, `Sauce` as direct SPM dependencies
-   while Lowtech is still present. Nothing breaks; the graph just stops being implicit.
-2. Add `Snag/Kit/` with the trivial helpers. Delete `import Lowtech` from files that need only
-   those, one at a time.
+1. ~~Add `Defaults`, `Sparkle`, `LaunchAtLogin`, `Magnet`, `Sauce` as direct SPM dependencies
+   while Lowtech is still present.~~ **Done.**
+2. ~~Add `Snag/Kit/` with the trivial helpers: `SWIFTUI_PREVIEW`, `mainActor`, `asyncNow`,
+   `focus`, `pub`, `Repeater`, `EnvState`, `UM`.~~ **Done.** Swift resolves unqualified names
+   against the current module first, so these already win over Lowtech's versions without
+   editing a single call site. That trick makes the rest of this migration incremental: each
+   replacement takes effect the moment it is added, and `import Lowtech` can stay until the
+   very end.
+2b. **Next:** the `FilePath` / `String` / `URL` / `Process` / `Array` extensions listed above.
+   Do these before anything else; they are the pervasive layer and everything else compiles
+   more cleanly once paths behave.
 3. Port the SwiftUI views and text helpers.
 4. Port `SauceKey` / `TriggerKey`, preserving raw values. Verify against a prefs dump before and
    after: `defaults read com.santino.Snag triggerKeys`.
