@@ -7,7 +7,7 @@
 Type a few characters, get the file, act on it without leaving the keyboard. Partial and
 misspelled queries still match.
 
-No account, no telemetry, nothing leaves your machine.
+**Free and open source.** No account, no telemetry, nothing leaves your machine.
 
 Snag is a fork of [Cling](https://github.com/FuzzyIdeas/Cling) by Alin Panaitiu, GPL-3.0. Cling
 is excellent and the search engine is his work. This build removes the €12 licence gate, strips
