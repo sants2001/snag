@@ -1,7 +1,11 @@
-# Snag
+<div align="center">
+  <img src="docs/images/icon.png" width="128" alt="Snag">
+  <h1>Snag</h1>
+  <p><strong>Find any file on your Mac, instantly.</strong></p>
+</div>
 
-Find any file on your Mac, instantly. Type a few characters, get the file, act on it without
-leaving the keyboard. Partial and misspelled queries still match.
+Type a few characters, get the file, act on it without leaving the keyboard. Partial and
+misspelled queries still match.
 
 No account, no telemetry, nothing leaves your machine.
 
