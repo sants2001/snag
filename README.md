@@ -19,13 +19,41 @@ containing the word invoice" is not something it can do at all.
 
 ## Install
 
-Needs Xcode 26 or newer, from the App Store.
+**Requires Xcode 26 or newer**, free from the Mac App Store. Not just the Command Line Tools;
+Snag is a SwiftUI app and needs the full Xcode. First launch Xcode once so it finishes setting
+itself up, then:
 
 ```bash
 git clone https://github.com/sants2001/snag && cd snag && ./install.sh
 ```
 
-That builds, signs and installs to `/Applications`, then prints what to do next.
+Takes a few minutes. It builds, signs, installs to `/Applications` and launches Snag.
+
+Then two things, both required:
+
+**1. Grant Full Disk Access.** System Settings → Privacy & Security → Full Disk Access → **+** →
+choose `/Applications/Snag.app`. Without it Snag can only see part of your Home folder, and
+Desktop and Downloads will be missing from results.
+
+**2. Press Right Command + `/`.** That is how you open Snag. There is no Dock icon and no menu
+bar icon by design, so the hotkey is the only way in. If nothing happens, another app has
+claimed that combination; see [Usage](#usage) for how to rebind.
+
+The first index takes a few minutes and uses noticeable CPU. After that Snag sits idle until you
+summon it.
+
+### Updating
+
+```bash
+git pull && ./install.sh
+```
+
+### Uninstalling
+
+```bash
+rm -rf /Applications/Snag.app ~/Library/Caches/com.santino.Snag
+defaults delete com.santino.Snag
+```
 
 Snag builds on your machine rather than shipping a download, on purpose. There is no Apple
 Developer ID behind it, so a downloaded binary would be quarantined and refused by Gatekeeper

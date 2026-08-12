@@ -1,9 +1,41 @@
+# Build output
+build/
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Per-developer Xcode state. Never useful to anyone else, and it records local paths.
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Packages/
+
+# Release artifacts. Built locally, never committed.
 *.dmg
+*.zip
+*.pkg
 *.delta
 *.bkp
-Releases/*.html
-required.swift
-Releases/old_updates/
 *.tmp
-build/
 tags
+
+# macOS
+.DS_Store
+._*
+
+# Editors
+.idea/
+*.swp
+*~
+
+# Anything a contributor drops in while testing. Better to ignore these by name than to have
+# someone's private file arrive in a pull request.
+/scratch/
+/tmp/
+*.local
+*.private

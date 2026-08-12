@@ -26,9 +26,10 @@ let envState = EnvState()
 
 /// A muted, earthy sidebar colour with a light/dark pair: deeper on the light
 /// sidebar, lifted on the dark one so the glyph keeps its weight either way.
-/// Skin / stone / clay / sage / terracotta tones instead of saturated system
-/// colours, shared across the lowtechguys settings sidebars (keep rcmd, Lunar,
-/// Snag, Clop, Pipiri, Crank in step when the palette changes).
+/// Skin / stone / clay / sage / terracotta tones rather than saturated system colours.
+///
+/// Inherited from Cling, where this note asked the author to keep the palette in step across
+/// his other apps. Snag is not part of that family and is free to diverge.
 struct SidebarHue {
     static let sage = rgb(0.39, 0.49, 0.26, 0.60, 0.66, 0.50)
     static let dustyBlue = rgb(0.24, 0.43, 0.63, 0.53, 0.64, 0.75)
