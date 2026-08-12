@@ -1,4 +1,3 @@
-import Lowtech
 import SwiftUI
 
 /// Toggle-first editor for a grouped ignore / blocklist file. Each `#:group` becomes a row with an

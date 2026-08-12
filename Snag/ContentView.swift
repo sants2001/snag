@@ -9,7 +9,6 @@ import AppKit
 import ClopSDK
 import Defaults
 import KeyboardShortcuts
-import Lowtech
 import OSLog
 import QuickLook
 import SwiftUI

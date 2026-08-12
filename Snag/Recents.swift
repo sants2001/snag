@@ -1,6 +1,5 @@
 import Defaults
 import Foundation
-import Lowtech
 import OSLog
 import System
 
@@ -354,6 +353,6 @@ func queryRecents() -> MDQuery? {
         .deliverImmediately
     )
 
-    MDQueryExecute(query, kMDQueryWantsUpdates.rawValue.u)
+    MDQueryExecute(query, CFOptionFlags(kMDQueryWantsUpdates.rawValue))
     return query
 }

@@ -1,6 +1,5 @@
 import AppKit
 import Defaults
-import Lowtech
 import OSLog
 import SwiftUI
 import System

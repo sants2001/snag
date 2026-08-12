@@ -1,6 +1,5 @@
 import Defaults
 import Foundation
-import Lowtech
 import os.log
 
 private let cliLog = Logger(subsystem: "com.santino.Snag", category: "CLIService")

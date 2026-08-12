@@ -11,8 +11,6 @@
 		C74B68A12D50F95800FCDEBA /* Ignore in Frameworks */ = {isa = PBXBuildFile; productRef = C74B68A02D50F95800FCDEBA /* Ignore */; };
 		C7605CC82F77D87C0087B195 /* SnagCLI in Copy CLI */ = {isa = PBXBuildFile; fileRef = C7605CC02F77D81A0087B195 /* SnagCLI */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		C7605CD02F77E0000087B195 /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = C7605CCF2F77E0000087B195 /* ArgumentParser */; };
-		C76172292D50F5D000D78B4F /* Lowtech in Frameworks */ = {isa = PBXBuildFile; productRef = C76172282D50F5D000D78B4F /* Lowtech */; };
-		C761722B2D50F5D000D78B4F /* LowtechIndie in Frameworks */ = {isa = PBXBuildFile; productRef = C761722A2D50F5D000D78B4F /* LowtechIndie */; };
 		C7C2CDD32FDFE0B6005EC019 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = C7C2CDD22FDFE0B6005EC019 /* KeyboardShortcuts */; };
 		C7FE59F12D635D1500141592 /* ClopSDK in Frameworks */ = {isa = PBXBuildFile; productRef = C7FE59F02D635D1500141592 /* ClopSDK */; };
 		5A6ADEC0000000000000001 /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 5A6ADEC0000000000000002 /* Defaults */; };
@@ -97,14 +95,12 @@
 			files = (
 				C74B68A12D50F95800FCDEBA /* Ignore in Frameworks */,
 				C7C2CDD32FDFE0B6005EC019 /* KeyboardShortcuts in Frameworks */,
-				C76172292D50F5D000D78B4F /* Lowtech in Frameworks */,
 				C7FE59F12D635D1500141592 /* ClopSDK in Frameworks */,
 				5A6ADEC0000000000000001 /* Defaults in Frameworks */,
 				5A6ADEC0000000000000101 /* Sparkle in Frameworks */,
 				5A6ADEC0000000000000201 /* LaunchAtLogin in Frameworks */,
 				5A6ADEC0000000000000301 /* Magnet in Frameworks */,
 				5A6ADEC0000000000000401 /* Sauce in Frameworks */,
-				C761722B2D50F5D000D78B4F /* LowtechIndie in Frameworks */,
 				AA11000000000000000000A3 /* Highlighter in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -185,8 +181,6 @@
 			);
 			name = Snag;
 			packageProductDependencies = (
-				C76172282D50F5D000D78B4F /* Lowtech */,
-				C761722A2D50F5D000D78B4F /* LowtechIndie */,
 				C74B68A02D50F95800FCDEBA /* Ignore */,
 				C7FE59F02D635D1500141592 /* ClopSDK */,
 				5A6ADEC0000000000000002 /* Defaults */,
@@ -230,7 +224,6 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				C7605CCE2F77E0000087B195 /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
-				C76172272D50F5D000D78B4F /* XCRemoteSwiftPackageReference "Lowtech" */,
 				C76172332D50F8B100D78B4F /* XCRemoteSwiftPackageReference "swift-ignore" */,
 				C7FE59EF2D635CDC00141592 /* XCRemoteSwiftPackageReference "ClopSDK" */,
 				5A6ADEC0000000000000003 /* XCRemoteSwiftPackageReference "Defaults" */,
@@ -577,14 +570,6 @@
 				minimumVersion = 1.5.0;
 			};
 		};
-		C76172272D50F5D000D78B4F /* XCRemoteSwiftPackageReference "Lowtech" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/FuzzyIdeas/Lowtech";
-			requirement = {
-				branch = ventura;
-				kind = branch;
-			};
-		};
 		C76172332D50F8B100D78B4F /* XCRemoteSwiftPackageReference "swift-ignore" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/alin23/swift-ignore";
@@ -658,16 +643,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C7605CCE2F77E0000087B195 /* XCRemoteSwiftPackageReference "swift-argument-parser" */;
 			productName = ArgumentParser;
-		};
-		C76172282D50F5D000D78B4F /* Lowtech */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C76172272D50F5D000D78B4F /* XCRemoteSwiftPackageReference "Lowtech" */;
-			productName = Lowtech;
-		};
-		C761722A2D50F5D000D78B4F /* LowtechIndie */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C76172272D50F5D000D78B4F /* XCRemoteSwiftPackageReference "Lowtech" */;
-			productName = LowtechIndie;
 		};
 		C7C2CDD22FDFE0B6005EC019 /* KeyboardShortcuts */ = {
 			isa = XCSwiftPackageProductDependency;

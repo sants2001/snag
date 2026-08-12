@@ -5,8 +5,6 @@
 import AppKit
 import Combine
 import Defaults
-import Lowtech
-import LowtechIndie
 import OSLog
 import Sparkle
 import SwiftUI
@@ -68,7 +66,7 @@ let AM = AppearanceManager.shared
 // MARK: - AppDelegate
 
 @MainActor
-class AppDelegate: LowtechIndieAppDelegate {
+class AppDelegate: SnagAppDelegate {
     static var shared: AppDelegate!
 
     var keepSettingsFrontUntil: Date?
@@ -109,6 +107,7 @@ class AppDelegate: LowtechIndieAppDelegate {
 
         super.applicationDidFinishLaunching(notification)
 
+        KM.startFlagsMonitor()
         KM.specialKey = Defaults[.enableGlobalHotkey] ? Defaults[.showAppKey] : nil
         KM.specialKeyModifiers = Defaults[.triggerKeys]
         KM.onSpecialHotkey = { [self] in

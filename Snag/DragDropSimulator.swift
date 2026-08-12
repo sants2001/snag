@@ -1,5 +1,4 @@
 import Cocoa
-import Lowtech
 import OSLog
 
 private let log = Logger(subsystem: snagSubsystem, category: "DragDropSimulator")

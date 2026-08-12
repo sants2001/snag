@@ -1,8 +1,7 @@
 import Foundation
-import Lowtech
 import SwiftUI
 
-let SHARING_MANAGER = SharingManager()
+@MainActor let SHARING_MANAGER = SharingManager()
 
 // MARK: - ShareButton
 

@@ -1,6 +1,5 @@
 import Defaults
 import KeyboardShortcuts
-import Lowtech
 import OSLog
 import SwiftUI
 import System

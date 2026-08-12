@@ -7,7 +7,6 @@
 
 import Foundation
 import KeyboardShortcuts
-import Lowtech
 import SwiftUI
 
 /// One radius shared by the results table, the file preview panel and the action-row background so

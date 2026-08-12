@@ -95,6 +95,28 @@ extension View {
     /// `AnyView(...)` wrapping the whole expression.
     var any: AnyView { AnyView(self) }
 
+    /// Stretch to the full available width, aligned. Named for how often it appears: nearly
+    /// every row in Settings ends with one.
+    func hfill(_ alignment: Alignment = .center) -> some View {
+        frame(maxWidth: .infinity, alignment: alignment)
+    }
+
+    /// Apply a transform only when a condition holds, without breaking the view's type.
+    @ViewBuilder
+    func `if`<Content: View>(_ condition: Bool, @ViewBuilder transform: (Self) -> Content) -> some View {
+        if condition { transform(self) } else { self }
+    }
+
+    /// Fill both axes.
+    func fill(_ alignment: Alignment = .center) -> some View {
+        frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
+    }
+
+    /// Vertical counterpart.
+    func vfill(_ alignment: Alignment = .center) -> some View {
+        frame(maxHeight: .infinity, alignment: alignment)
+    }
+
     func roundbg(
         radius: CGFloat = 5,
         verticalPadding: CGFloat = 2.5,
@@ -200,3 +222,11 @@ extension View {
 
 /// The user's home directory. Named to match the call sites, which read `HOME / "Library"`.
 let HOME = FilePath(NSHomeDirectory())
+
+// MARK: - Animations
+
+extension Animation {
+    /// The house spring: quick, lightly damped, interruptible. Used for toolbar rows appearing
+    /// and disappearing as modifiers are held, where a slower curve reads as lag.
+    static let fastSpring = Animation.interactiveSpring(dampingFraction: 0.7)
+}

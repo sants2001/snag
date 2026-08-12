@@ -1,7 +1,6 @@
 import ApplicationServices
 import Cocoa
 import Combine
-import Lowtech
 import OSLog
 import System
 

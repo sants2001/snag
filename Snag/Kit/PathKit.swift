@@ -54,9 +54,35 @@ extension String {
         return replacing(homeDirRegex, with: { "~" + ($0.1 ?? "") })
     }
 
-    var expandingTildeInPath: String {
-        (self as NSString).expandingTildeInPath
+    /// A file URL for this path, whether or not it exists.
+    var fileURL: URL? {
+        guard !isEmpty, count <= 4096 else { return nil }
+        return URL(fileURLWithPath: trimmedPath.expandingTildeInPath)
     }
+
+    /// A file URL for this path. `NSApplication.application(_:openFiles:)` delivers plain
+    /// paths, and everything downstream works in URLs.
+    var url: URL? {
+        guard !isEmpty, count <= 4096 else { return nil }
+        return URL(fileURLWithPath: trimmedPath.expandingTildeInPath)
+    }
+
+    /// Parse and confirm in one step, so callers can `guard let` a path they know is real.
+    var existingFilePath: FilePath? {
+        guard let path = filePath, path.exists else { return nil }
+        return path
+    }
+
+    var expandingTildeInPath: String {
+        ns.expandingTildeInPath
+    }
+
+    /// Whitespace and newlines stripped from both ends.
+    var trimmed: String { trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    /// Bridge to `NSString`, for the path APIs Foundation never brought over to `String`
+    /// (`lastPathComponent`, `deletingPathExtension`, and friends).
+    var ns: NSString { self as NSString }
 }
 
 // MARK: - FilePath
@@ -117,11 +143,71 @@ extension FilePath {
         return path
     }
 
-    // The `/` path-join operator is deliberately NOT defined yet. Unqualified *name* lookup
-    // prefers the current module, which is why every other member here silently takes over from
-    // Lowtech's version with no call-site edits. Operator lookup has no such rule: it gathers
-    // every visible candidate and reports "ambiguous use of operator '/'" while both modules
-    // define one. It gets added in the same commit that drops Lowtech from the project.
+    /// The containing directory.
+    var dir: FilePath { removingLastComponent() }
+
+    @discardableResult
+    func move(to path: FilePath, force: Bool = false) throws -> FilePath {
+        guard path != self else { return path }
+        if force, path.exists {
+            try fm.removeItem(atPath: path.string)
+        }
+        try fm.moveItem(atPath: string, toPath: path.string)
+        return path
+    }
+
+    /// The last path component. `/` has none, so it reports "Root".
+    var name: FilePath.Component { lastComponent ?? "Root" }
+
+    /// Modification time as a Unix timestamp, falling back to creation time. Nil when the path
+    /// does not exist. Seconds rather than a `Date` because every call site compares it against
+    /// `timeIntervalSince1970`.
+    var timestamp: TimeInterval? {
+        guard let attrs = try? fm.attributesOfItem(atPath: string) else { return nil }
+        let date = attrs[FileAttributeKey.modificationDate] as? Date
+            ?? attrs[FileAttributeKey.creationDate] as? Date
+        return date?.timeIntervalSince1970
+    }
+
+    /// Modification time as a `Date`. Separate from `timestamp`, which returns seconds; both
+    /// forms have call sites and converting at each one reads worse.
+    var modificationDate: Date? {
+        guard let attrs = try? fm.attributesOfItem(atPath: string) else { return nil }
+        return attrs[FileAttributeKey.modificationDate] as? Date
+            ?? attrs[FileAttributeKey.creationDate] as? Date
+    }
+
+    /// Size in bytes. Nil for directories and anything unreadable; a directory's own size is
+    /// meaningless here and computing the recursive size would be far too slow per row.
+    func fileSize() -> Int? {
+        guard let attrs = try? fm.attributesOfItem(atPath: string) else { return nil }
+        return (attrs[FileAttributeKey.size] as? NSNumber)?.intValue
+    }
+
+    /// Join a path component. Reads better than `appending` in the deeply nested path
+    /// expressions this app is full of.
+    ///
+    /// This could not exist while Lowtech was linked. Unqualified *name* lookup prefers the
+    /// current module, which is how every other member here took over silently with no
+    /// call-site edits, but operator lookup has no such rule: it gathers every visible
+    /// candidate and reports an ambiguity.
+    static func / (lhs: FilePath, rhs: String) -> FilePath {
+        lhs.appending(rhs)
+    }
+
+    /// Overload for the component type, which some call sites pass instead of a String.
+    static func / (lhs: FilePath, rhs: FilePath.Component) -> FilePath {
+        lhs.appending(rhs.string)
+    }
+}
+
+extension Sequence where Element: Hashable {
+    /// Duplicates removed, first-seen order preserved. Order matters: these feed list views
+    /// where reshuffling on each refresh would be visible. `Set` would not do.
+    var uniqued: [Element] {
+        var seen = Set<Element>()
+        return filter { seen.insert($0).inserted }
+    }
 }
 
 // MARK: - URL
@@ -130,12 +216,41 @@ extension URL {
     var filePath: FilePath? {
         isFileURL ? FilePath(path) : nil
     }
+
+    /// The path, but only if something is actually there.
+    var existingFilePath: FilePath? {
+        guard isFileURL, fm.fileExists(atPath: path) else { return nil }
+        return FilePath(path)
+    }
 }
 
 // MARK: - Collections
 
 extension Collection {
     var isNotEmpty: Bool { !isEmpty }
+
+    /// Bounds-checked access. Used where an index comes from a keystroke or a stale selection
+    /// and trapping would be a crash rather than a bug report.
+    subscript(safe index: Index) -> Element? {
+        indices.contains(index) ? self[index] : nil
+    }
+}
+
+extension Sequence {
+    /// Sort ascending by a comparable property, without spelling out the closure.
+    func sorted(by keyPath: KeyPath<Element, some Comparable>) -> [Element] {
+        sorted { $0[keyPath: keyPath] < $1[keyPath: keyPath] }
+    }
+
+    /// The element with the greatest value of a comparable property.
+    func max(by keyPath: KeyPath<Element, some Comparable>) -> Element? {
+        self.max { $0[keyPath: keyPath] < $1[keyPath: keyPath] }
+    }
+
+    /// The element with the least value of a comparable property.
+    func min(by keyPath: KeyPath<Element, some Comparable>) -> Element? {
+        self.min { $0[keyPath: keyPath] < $1[keyPath: keyPath] }
+    }
 }
 
 extension SetAlgebra {
@@ -144,6 +259,29 @@ extension SetAlgebra {
 
 extension Sequence where Element: Hashable {
     var set: Set<Element> { Set(self) }
+}
+
+extension Sequence where Element: Hashable {
+    /// Everything except the given elements, order preserved.
+    ///
+    /// Takes the exclusions as a Set first: the callers pass a batch of removed paths and
+    /// filtering with `contains` on an Array would be quadratic over result lists that run to
+    /// thousands of entries.
+    func without(_ excluded: some Sequence<Element>) -> [Element] {
+        let drop = Set(excluded)
+        return filter { !drop.contains($0) }
+    }
+
+    /// Single-element form, for removing one filter from a list.
+    func without(_ excluded: Element) -> [Element] {
+        filter { $0 != excluded }
+    }
+}
+
+extension Sequence {
+    /// Materialise into an Array. Mostly used on Sets, where the call sites need a stable
+    /// ordered value to hand to SwiftUI.
+    var arr: [Element] { Array(self) }
 }
 
 // MARK: - Dispatch
@@ -281,4 +419,58 @@ func runShell(
         error: String(data: errData, encoding: .utf8),
         exitCode: process.terminationStatus
     )
+}
+
+// MARK: - Numeric conveniences
+
+extension BinaryInteger {
+    /// Widen to `Int`. Reads better than `Int(x)` when chained, which is why the call sites use
+    /// it: `QWERTYKeyCode.i` rather than `Int(QWERTYKeyCode)`.
+    var i: Int { Int(self) }
+
+    /// Widen to `UInt32`, for the Core Foundation and Metadata APIs that take one.
+    var u: UInt32 { UInt32(self) }
+
+    /// String form. Used where a number becomes a key equivalent or a label.
+    var s: String { String(self) }
+
+    /// Widen to `Double`, for the arithmetic that needs fractions.
+    var d: Double { Double(self) }
+}
+
+// MARK: - Floating point formatting
+
+extension BinaryFloatingPoint {
+    /// Fixed-decimal string, e.g. `1.5` for a file size. `String(format:)` rather than a
+    /// NumberFormatter: this runs per visible row and a formatter allocation there is wasteful.
+    func str(decimals: UInt8) -> String {
+        String(format: "%.\(decimals)f", Double(self))
+    }
+
+    /// Rounded to the nearest whole number.
+    var intround: Int { Int(Double(self).rounded()) }
+}
+
+// MARK: - Sequence to dictionary
+
+extension Sequence {
+    /// Build a dictionary by deriving a key/value pair from each element. Later collisions win,
+    /// which is what the callers expect and what `Dictionary(uniqueKeysWith:)` would trap on.
+    func dict<K: Hashable, V>(_ transform: (Element) -> (K, V)?) -> [K: V] {
+        Dictionary(compactMap(transform), uniquingKeysWith: { _, last in last })
+    }
+}
+
+// MARK: - NSRunningApplication
+
+extension NSRunningApplication {
+    /// Display name, preferring the localized bundle name over the process name.
+    ///
+    /// `localizedName` is nil for some background and helper processes, so the bundle's display
+    /// name is the fallback rather than the other way round.
+    var name: String? {
+        localizedName
+            ?? bundleURL.flatMap { Bundle(url: $0)?.infoDictionary?["CFBundleDisplayName"] as? String }
+            ?? bundleURL?.deletingPathExtension().lastPathComponent
+    }
 }

@@ -15,7 +15,6 @@ import AVKit
 import Defaults
 import ImageIO
 import KeyboardShortcuts
-import Lowtech
 import PDFKit
 import QuickLookUI
 import SwiftUI

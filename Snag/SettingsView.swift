@@ -1,7 +1,5 @@
 import Defaults
 import LaunchAtLogin
-import Lowtech
-import LowtechIndie
 import SwiftUI
 
 extension Binding<Int> {

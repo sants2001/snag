@@ -12,7 +12,6 @@
 import AppKit
 import AVFoundation
 import ImageIO
-import Lowtech
 import os
 import OSLog
 import SwiftUI

@@ -1,5 +1,4 @@
 import Foundation
-import Lowtech
 import System
 
 // MARK: - Structural exclude patterns

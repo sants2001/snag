@@ -2,7 +2,6 @@ import AppKit
 import Defaults
 import Foundation
 import Ignore
-import Lowtech
 import OSLog
 import SwiftUI
 import System

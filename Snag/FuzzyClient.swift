@@ -3,7 +3,6 @@ import Cocoa
 import Combine
 import Foundation
 import Ignore
-import Lowtech
 import OSLog
 import System
 
