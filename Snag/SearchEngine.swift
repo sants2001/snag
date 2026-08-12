@@ -1959,6 +1959,29 @@ final class SearchEngine: @unchecked Sendable {
                 return false
             }()
             if isHidden { return 0 }
+
+            // Demote the *inside* of an app bundle.
+            //
+            // `/Applications` is an important prefix so apps themselves rank well, but that also
+            // lifted every resource buried inside a bundle to the same importance as the user's
+            // Desktop. In practice Xcode's bundled README outranked the user's own project
+            // README, which is the worst ranking bug in the app.
+            //
+            // The bundle itself keeps its importance; only paths continuing past `.app/` are
+            // demoted, and to 1 rather than 0 so they still outrank hidden files.
+            var ap = 0
+            while ap &+ 4 < len {
+                if allBase[off &+ ap] == 0x2E, // .
+                   allBase[off &+ ap &+ 1] == 0x61, // a
+                   allBase[off &+ ap &+ 2] == 0x70, // p
+                   allBase[off &+ ap &+ 3] == 0x70, // p
+                   allBase[off &+ ap &+ 4] == 0x2F // /
+                {
+                    return 1
+                }
+                ap &+= 1
+            }
+
             // Important dirs first.
             var ipi = 0
             while ipi < importantPrefixes.count {
