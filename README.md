@@ -17,9 +17,23 @@ It is not a Spotlight replacement. Spotlight indexes file *contents* and metadat
 names and paths only. "Where is that file called invoice" is what this is for. "Find documents
 containing the word invoice" is not something it can do at all.
 
-## Build
+## Install
 
-Needs Xcode 26 or newer.
+Needs Xcode 26 or newer, from the App Store.
+
+```bash
+git clone https://github.com/sants2001/snag && cd snag && ./install.sh
+```
+
+That builds, signs and installs to `/Applications`, then prints what to do next.
+
+Snag builds on your machine rather than shipping a download, on purpose. There is no Apple
+Developer ID behind it, so a downloaded binary would be quarantined and refused by Gatekeeper
+with a message that reads like file corruption. Building locally sidesteps that: the app is
+ad-hoc signed by the machine that runs it. It also means nobody has to trust a stranger's binary
+to run something that asks for Full Disk Access.
+
+### Building by hand
 
 ```bash
 xcodebuild -project Snag.xcodeproj -scheme Snag -configuration Release -destination 'platform=macOS' build
