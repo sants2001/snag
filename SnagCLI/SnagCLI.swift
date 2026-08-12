@@ -44,7 +44,7 @@ func sendMachPort(data: Data?, sendTimeout: TimeInterval = 2, recvTimeout: TimeI
 struct SnagCLI: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "snag",
-        abstract: "Snag: fast fuzzy file search from the command line",
+        abstract: "Snag: find any file on your Mac, from the command line",
         subcommands: [Search.self, Reindex.self, Status.self, Recents.self, Index.self, Explain.self],
         defaultSubcommand: Search.self
     )

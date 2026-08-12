@@ -6,7 +6,7 @@ cask "snag" do
       using:    :git,
       branch:   "main"
   name "Snag"
-  desc "Instant fuzzy file search"
+  desc "Find any file on your Mac, instantly"
   homepage "https://github.com/sants2001/snag"
 
   depends_on macos: ">= :sequoia"

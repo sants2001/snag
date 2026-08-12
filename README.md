@@ -1,7 +1,9 @@
 # Snag
 
-Instant fuzzy file search for macOS. Type a few characters, get the file, act on it without
-leaving the keyboard. No account, no telemetry, nothing leaves your machine.
+Find any file on your Mac, instantly. Type a few characters, get the file, act on it without
+leaving the keyboard. Partial and misspelled queries still match.
+
+No account, no telemetry, nothing leaves your machine.
 
 Snag is a fork of [Cling](https://github.com/FuzzyIdeas/Cling) by Alin Panaitiu, GPL-3.0. Cling
 is excellent and the search engine is his work. This build removes the €12 licence gate, strips
@@ -113,6 +115,24 @@ Settings → Search, then:
 ```bash
 /Applications/Snag.app/Contents/SharedSupport/SnagCLI search kernel --count 20 --verbose
 ```
+
+## If Snag crashes
+
+Snag has no crash reporter and sends nothing, so a crash on your machine is invisible to
+everyone but you. Reporting it is the only way it gets fixed.
+
+macOS saves the report locally. **Settings → About → Crash logs** reveals the newest one in
+Finder, ready to drag into an issue. The button only appears if a report exists. Or find them
+yourself:
+
+```bash
+open ~/Library/Logs/DiagnosticReports
+```
+
+Files are named `Snag-<date>.ips`. Attach the newest to
+[a new issue](https://github.com/sants2001/snag/issues/new) along with what you were doing.
+They contain a stack trace and your macOS version, no file contents and no personal data,
+though the process list does name other running apps if that matters to you.
 
 ## Security
 

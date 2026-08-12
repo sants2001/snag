@@ -1297,8 +1297,25 @@ private struct SnagAboutView: View {
                 Link("Source", destination: URL(string: "https://github.com/sants2001/snag")!)
                 Link("Report an issue", destination: URL(string: "https://github.com/sants2001/snag/issues")!)
                 Link("Changes", destination: URL(string: "https://github.com/sants2001/snag/commits/main")!)
+                if SnagCrashLogs.hasAny {
+                    Button("Crash logs") { SnagCrashLogs.revealLatest() }
+                        .buttonStyle(.link)
+                }
             }
             .font(.system(size: 12))
+
+            // Snag sends nothing, so a crash on someone else's Mac is invisible unless they
+            // choose to report it. macOS already writes the report locally; this only removes
+            // the work of finding it. The button is hidden when there is nothing to show, so it
+            // never implies Snag has been crashing.
+            if SnagCrashLogs.hasAny {
+                Text("Snag reports nothing automatically. If it crashed, this reveals the log macOS saved so you can attach it to an issue.")
+                    .round(10, weight: .regular)
+                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 380)
+            }
 
             // Required by GPL-3, and true: the hard parts of the search engine are Alin's.
             Text("Snag is a fork of [Cling](https://github.com/FuzzyIdeas/Cling) by Alin Panaitiu, released under the GPL-3.0. Original work © Alin Panaitiu / The Low Tech Guys.")
