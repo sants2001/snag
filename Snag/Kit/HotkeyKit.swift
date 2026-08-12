@@ -12,6 +12,7 @@
 
 import Carbon
 import Defaults
+import OSLog
 import Magnet
 import Sauce
 import SwiftUI
@@ -179,6 +180,8 @@ extension Set<SauceKey> {
 ///
 /// Narrower than Lowtech's, which juggled primary/secondary/alt/shift hotkey banks. Snag binds
 /// exactly one, so this holds one.
+private let hotkeyLog = Logger(subsystem: snagSubsystem, category: "Hotkey")
+
 @MainActor
 final class KeysManager: ObservableObject {
     static let shared = KeysManager()
@@ -231,19 +234,29 @@ final class KeysManager: ObservableObject {
     /// Tear down and re-register. Cheap, and called on every relevant preference change.
     func reinitHotkeys() {
         unregister()
-        guard !SWIFTUI_PREVIEW,
-              let specialKey, !specialKeyModifiers.isEmpty,
-              let combo = KeyCombo(key: specialKey, cocoaModifiers: specialKeyModifiers.sideIndependentModifiers)
-        else { return }
+        guard !SWIFTUI_PREVIEW else { return }
+        guard let specialKey, !specialKeyModifiers.isEmpty else {
+            hotkeyLog.info("not registering: key=\(String(describing: self.specialKey), privacy: .public) modifiers=\(self.specialKeyModifiers.count, privacy: .public)")
+            return
+        }
+        guard let combo = KeyCombo(key: specialKey, cocoaModifiers: specialKeyModifiers.sideIndependentModifiers) else {
+            hotkeyLog.error("KeyCombo rejected key=\(specialKey.rawValue, privacy: .public)")
+            return
+        }
 
+        // Closure form, not target/action. Magnet invokes a target via
+        // `target.perform(selector, with:)`, which is an NSObject method; KeysManager is a plain
+        // Swift class, so the registration succeeded and the callback silently went nowhere.
+        // That is exactly the failure this had: `register -> true` in the log, nothing on press.
         let hotkey = HotKey(
             identifier: Self.identifier,
             keyCombo: combo,
-            target: self,
-            action: #selector(handleSpecialHotkey),
             actionQueue: .main
-        )
-        hotkey.register()
+        ) { [weak self] _ in
+            self?.onSpecialHotkey?()
+        }
+        let ok = hotkey.register()
+        hotkeyLog.info("register key=\(specialKey.rawValue, privacy: .public) mods=\(self.specialKeyModifiers.map(\.readableStr).joined(separator: "+"), privacy: .public) -> \(ok, privacy: .public)")
         registered = hotkey
     }
 
@@ -255,9 +268,6 @@ final class KeysManager: ObservableObject {
         registered = nil
     }
 
-    @objc private func handleSpecialHotkey() {
-        onSpecialHotkey?()
-    }
 }
 
 @MainActor let KM = KeysManager.shared
