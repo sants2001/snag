@@ -1,7 +1,6 @@
 import AppKit
 import Defaults
 import Foundation
-import Ignore
 import OSLog
 import SwiftUI
 import System

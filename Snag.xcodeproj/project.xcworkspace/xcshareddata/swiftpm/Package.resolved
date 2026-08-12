@@ -1,5 +1,5 @@
 {
-  "originHash" : "177e2d53ed75fdb52f601a3284cfb8dd4e360ae5894db1a0e2c719827e6196f4",
+  "originHash" : "25fe6622c0348d695d3733253be58899c1ab1b1cd129b3e0bea00c681174511e",
   "pins" : [
     {
       "identity" : "clopsdk",
@@ -71,15 +71,6 @@
       "state" : {
         "revision" : "626b5b7b2f45e1b0b1c6f4a309296d1d21d7311b",
         "version" : "1.7.1"
-      }
-    },
-    {
-      "identity" : "swift-ignore",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/alin23/swift-ignore",
-      "state" : {
-        "revision" : "3e7faf99d08aed7b0eeb2c6c55c381018ad9308f",
-        "version" : "1.0.3"
       }
     },
     {

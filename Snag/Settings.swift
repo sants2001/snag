@@ -645,6 +645,13 @@ extension Defaults.Keys {
     /// privilege boundary, so the listener exists only when the terminal tool is actually wanted.
     static let enableCLIService = Key<Bool>("enableCLIService", default: false)
 
+    /// Whether the on-disk index was built while Snag had Full Disk Access.
+    ///
+    /// Defaults to false so an index built by an older build, before this flag existed, is
+    /// treated as predating the grant and gets rebuilt once. A wasted reindex on upgrade is a
+    /// far better failure than silently missing Desktop and Downloads forever.
+    static let indexBuiltWithFullDiskAccess = Key<Bool>("indexBuiltWithFullDiskAccess", default: false)
+
     static let enableGlobalHotkey = Key<Bool>("enableGlobalHotkey", default: true)
     static let showAppKey = Key<SauceKey>("showAppKey", default: SauceKey.slash)
     static let triggerKeys = Key<[TriggerKey]>("triggerKeys", default: [.rcmd])

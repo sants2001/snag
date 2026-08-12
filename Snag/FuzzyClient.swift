@@ -2,7 +2,6 @@ import ClopSDK
 import Cocoa
 import Combine
 import Foundation
-import Ignore
 import OSLog
 import System
 
@@ -955,7 +954,22 @@ class FuzzyClient {
         externalIndexes = getExternalIndexes()
 
         hasFullDiskAccess = FullDiskAccess.isGranted
+
+        // An index built before Full Disk Access was granted is missing everything that was
+        // unreadable at the time: Desktop, Downloads, other apps' containers. Nothing else
+        // rebuilds it. The poller below only runs when the app *launches* without access, and
+        // the grant almost always happens while Snag is not running, so on the next launch it
+        // sees access, loads the stale cache, and silently serves an index missing a large
+        // fraction of the disk. Observed: 1,646,069 entries where a rebuild found 2,090,883.
+        let indexPredatesAccess = hasFullDiskAccess && !Defaults[.indexBuiltWithFullDiskAccess]
+        Defaults[.indexBuiltWithFullDiskAccess] = hasFullDiskAccess
+
         startIndex()
+
+        if indexPredatesAccess {
+            log.info("Full Disk Access granted after the index was built; reindexing")
+            refresh(pauseSearch: false)
+        }
 
         if !hasFullDiskAccess {
             // Skip the modal FDA prompt if onboarding will handle it

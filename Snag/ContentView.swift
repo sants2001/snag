@@ -1048,11 +1048,13 @@ struct ContentView: View {
 
     private var xButton: some View {
         Button(action: {
+            // Upstream dismissed the window when the query was already empty, doubling this
+            // button up as a close control. Snag has no Dock icon and no menu bar icon, so a
+            // hidden window is indistinguishable from a quit app: the X reads as having killed
+            // Snag, and the way back is a hotkey the user may not remember. Escape still
+            // dismisses, which is the conventional and reversible way to do it.
             if QLP.isVisible {
                 QLP.close()
-            } else if fuzzy.query.isEmpty {
-                dismiss()
-                AppDelegate.shared.handBackFocusAfterMainDismiss()
             } else {
                 fuzzy.query = ""
                 focused = .search
