@@ -113,20 +113,20 @@ Quick Filters, folder filters, scripts, and the result cap that upstream's free 
 
 ## Dependencies
 
-Every dependency is permissively licensed except one, which is the last thing standing between
-this repo and distributable binaries. See [docs/independence-plan.md](docs/independence-plan.md).
+**Every dependency is permissively licensed.** See
+[docs/independence-plan.md](docs/independence-plan.md) for how that was reached.
 
 | Package | Licence |
 |---|---|
 | Sauce, Magnet, Defaults, LaunchAtLogin, KeyboardShortcuts, ClopSDK | MIT |
 | Sparkle, HighlighterSwift | MIT-style |
 | swift-argument-parser | Apache-2.0 |
-| **alin23/swift-ignore** | **none (all rights reserved)** |
 
-`FuzzyIdeas/Lowtech` and `eonil/FSEvents`, both unlicensed, have been removed. Everything Snag
-used from them now lives in `Snag/Kit/`: the hotkey layer on Magnet and Sauce, a native
-`FSEventStream` watcher, memoization, Spotlight app discovery, and the path, string and view
-conveniences the app is built on.
+Three all-rights-reserved packages were removed: `FuzzyIdeas/Lowtech`, `eonil/FSEvents` and
+`alin23/swift-ignore`, the last of which wrapped a prebuilt Rust binary. Everything Snag used
+from them now lives in `Snag/Kit/`: the hotkey layer on Magnet and Sauce, a native
+`FSEventStream` watcher, gitignore matching, memoization, Spotlight app discovery, and the path,
+string and view conveniences the app is built on.
 
 ## Why Cling does not build from a clean checkout
 
@@ -156,11 +156,12 @@ Both are handled here.
 GPL-3.0, inherited from Cling. See [LICENSE](LICENSE). Original work © Alin Panaitiu / The Low
 Tech Guys.
 
-**You may distribute this source repository.** GPL-3.0 explicitly grants the right to distribute
-modified versions, which is what this is. The repo contains no proprietary code; SPM fetches
-dependencies on the building machine.
+**You may distribute this source repository**, and now the binaries too. GPL-3.0 grants the
+right to distribute modified versions, and with every all-rights-reserved package removed there
+is nothing proprietary left to embed.
 
-**Binaries are still blocked**, by exactly one package. `alin23/swift-ignore` ships with no
-licence file and is therefore all-rights-reserved, and a compiled `.app` statically embeds it.
-Replacing it means implementing gitignore matching in Swift, since it wraps a prebuilt Rust
-binary. That is the last step.
+What still stops a downloadable app is Gatekeeper, not licensing. Snag is ad-hoc signed, so a
+downloaded build is quarantined and refused with a message that reads like file corruption.
+Getting past that needs Developer ID signing and notarisation, which needs a paid Apple
+Developer account. Until then, building locally via `install.sh` is the distribution method,
+and it is a better security story anyway.
