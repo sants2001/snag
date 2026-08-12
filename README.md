@@ -190,6 +190,10 @@ is nothing proprietary left to embed.
 
 What still stops a downloadable app is Gatekeeper, not licensing. Snag is ad-hoc signed, so a
 downloaded build is quarantined and refused with a message that reads like file corruption.
-Getting past that needs Developer ID signing and notarisation, which needs a paid Apple
-Developer account. Until then, building locally via `install.sh` is the distribution method,
-and it is a better security story anyway.
+Building locally via `install.sh` sidesteps that, and is a better security story anyway for
+something that asks for Full Disk Access.
+
+`release.sh` produces a signed, notarised, stapled DMG for anyone who does have a **Developer ID
+Application** certificate. Note that is a different certificate from the **Apple Distribution**
+one used for the App Store; having shipped an app to the store does not mean you have it. It is
+free to create with an existing paid account.
